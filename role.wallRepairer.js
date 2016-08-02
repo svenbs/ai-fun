@@ -26,7 +26,7 @@ module.exports = {
             var target = undefined;
 
             // loop with increasing percentages
-            for (let percentage = 0.0001; percentage <= 1; percentage = percentage + 0.0001){
+            for (let percentage = 0.2; percentage <= 1; percentage = percentage + 0.2){
                 // find a wall with less than percentage hits
 
                 // for some reason this doesn't work
@@ -45,7 +45,15 @@ module.exports = {
                     // break the loop
                     break;
                 }
+                //setTimeout(function(){alert("hi")}, 1000);
+                //var timeout = setTimeout(test, 10000);
             }
+            var percentage = 100;
+            target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+            filter: (s) => s.structureType == STRUCTURE_WALL &&
+                 s.hits / s.hitsMax < percentage
+            });
+
 
             // if we find a wall that has to be repaired
             if (target != undefined) {

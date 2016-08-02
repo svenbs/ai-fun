@@ -48,7 +48,7 @@ module.exports.loop = function () {
         }
     }
 
-    var towers = Game.rooms.E3N41.find(FIND_STRUCTURES, {
+    var towers = Game.rooms.E57S44.find(FIND_STRUCTURES, {
         filter: (s) => s.structureType == STRUCTURE_TOWER
     });
     for (let tower of towers) {
@@ -58,12 +58,13 @@ module.exports.loop = function () {
         }
     }
 
+
     // setup some minimum numbers for different roles
-    var minimumNumberOfHarvesters = 2;
-    var minimumNumberOfTransporters = 3;
+    var minimumNumberOfHarvesters = 6;
+    var minimumNumberOfTransporters = 2;
     var minimumNumberOfUpgraders = 1;
-    var minimumNumberOfBuilders = 10;
-    var minimumNumberOfRepairers = 5;
+    var minimumNumberOfBuilders = 3;
+    var minimumNumberOfRepairers = 2;
     var minimumNumberOfWallRepairers = 5;
 
     // count the number of creeps alive for each role
@@ -82,19 +83,30 @@ module.exports.loop = function () {
     // if not enough harvesters
     if (numberOfHarvesters < minimumNumberOfHarvesters) {
         // try to spawn one
-        //name = Game.spawns.Spawn1.createCustomCreep(energy, 'harvester');
-        name = Game.spawns.Spawn1.createCreep([MOVE,WORK,WORK], undefined, { role: 'harvester', working: false });
+        name = Game.spawns.Spawn1.createCustomCreep(energy, 'harvester');
+        //name = Game.spawns.Spawn1.createCreep([MOVE,WORK,WORK], undefined, { role: 'harvester', working: false });
+
+        if (name == ERR_NOT_ENOUGH_ENERGY && numberOfHarvesters == 0) {
+            // spawn one with what is available
+            name = Game.spawns.Spawn1.createCustomCreep(
+            Game.spawns.Spawn1.room.energyAvailable, 'harvester');
+        }
     }
     else if (numberOfTransporters < minimumNumberOfTransporters) {
         // try to spawn one
-        //name = Game.spawns.Spawn1.createCustomCreep(energy, 'harvester');
-        name = Game.spawns.Spawn1.createCreep([MOVE,CARRY,CARRY,CARRY], undefined, { role: 'transporter', working: false });
+        name = Game.spawns.Spawn1.createCustomCreep(energy, 'harvester');
+        //name = Game.spawns.Spawn1.createCreep([MOVE,CARRY,CARRY,CARRY], undefined, { role: 'transporter', working: false });
+        if (name == ERR_NOT_ENOUGH_ENERGY && numberOfTransporters == 0) {
+            // spawn one with what is available
+            name = Game.spawns.Spawn1.createCustomCreep(
+            Game.spawns.Spawn1.room.energyAvailable, 'transporter');
+        }
     }
     // if not enough upgraders
     else if (numberOfUpgraders < minimumNumberOfUpgraders) {
         // try to spawn one
-        //name = Game.spawns.Spawn1.createCustomCreep(energy, 'upgrader');
-        name = Game.spawns.Spawn1.createCreep([MOVE,MOVE,CARRY,WORK], undefined, { role: 'upgrader', working: false });
+        name = Game.spawns.Spawn1.createCustomCreep(energy, 'upgrader');
+        //name = Game.spawns.Spawn1.createCreep([MOVE,MOVE,CARRY,WORK], undefined, { role: 'upgrader', working: false });
     }
     // if not enough repairers
     else if (numberOfRepairers < minimumNumberOfRepairers) {
@@ -118,7 +130,7 @@ module.exports.loop = function () {
 
     // print name to console if spawning was a success
     // name > 0 would not work since string > 0 returns false
-    if (!(name < 0)) {
+    if (!(name == undefined) && !(name < 0)) {
         console.log("Spawned new creep: " + name);
     }
 };

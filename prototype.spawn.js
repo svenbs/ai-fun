@@ -13,6 +13,8 @@ module.exports = function() {
 
             // Harvesters should only Work on the sources
             if (roleName == 'harvester') {
+                var energy = energy - 50;
+                var numberOfParts = Math.floor(energy / 100);                
                 // Just one MOVE-Part is needed
                 for (let i = 0; i < 1; i++) {
                     body.push(MOVE);
@@ -24,6 +26,7 @@ module.exports = function() {
             }
             // Transporters should only carry energy to where it's needed
             else if (roleName == 'transporter') {
+                var numberOfParts = Math.floor(energy / 100);
                 for (let i = 0; i < numberOfParts; i++) {
                     body.push(CARRY);
                 }
