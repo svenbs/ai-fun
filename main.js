@@ -1,3 +1,9 @@
+// @todo: renew creeps
+// @todo: rewrite spawn-logic (SpawnManager) - Creep Bodys by percentage
+// @todo: create squad logic, attack and defend rooms
+// @todo: create remote harvester logic
+// @todo: rewrite collectEnergy function to improve effectiveness
+
 // import modules
 require('prototype.spawn')();
 var roleHarvester = require('role.harvester');
@@ -60,12 +66,12 @@ module.exports.loop = function () {
 
 
     // setup some minimum numbers for different roles
-    var minimumNumberOfHarvesters = 4;
+    var minimumNumberOfHarvesters = 5;
     var minimumNumberOfTransporters = 2;
     var minimumNumberOfUpgraders = 1;
-    var minimumNumberOfBuilders = 4;
+    var minimumNumberOfBuilders = 2;
     var minimumNumberOfRepairers = 2;
-    var minimumNumberOfWallRepairers = 5;
+    var minimumNumberOfWallRepairers = 2;
 
     // count the number of creeps alive for each role
     // _.sum will count the number of properties in Game.creeps filtered by the
@@ -131,16 +137,16 @@ module.exports.loop = function () {
     // print name to console if spawning was a success
     // name > 0 would not work since string > 0 returns false
     if (!(name == undefined) && !(name < 0)) {
-        console.log("Spawned new creep: " + name);
+        console.log("Spawned new creep: " + name + ' ' + memory.creeps[name].role );
     }
-    
+
     function defendRoom(roomName) {
-    
+
         var hostiles = Game.rooms[roomName].find(FIND_HOSTILE_CREEPS);
-    
+
         if(hostiles.length > 0) {
             var username = hostiles[0].owner.username;
-            Game.notify(`User ${username} spotted in room ${roomName}`);
+            //Game.notify(`User ${username} spotted in room ${roomName}`);
             var towers = Game.rooms[roomName].find(
                 FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
             towers.forEach(tower => tower.attack(hostiles[0]));
