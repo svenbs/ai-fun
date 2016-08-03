@@ -137,7 +137,7 @@ module.exports.loop = function () {
     // print name to console if spawning was a success
     // name > 0 would not work since string > 0 returns false
     if (!(name == undefined) && !(name < 0)) {
-        console.log("Spawned new creep: " + name + ' ' + memory.creeps[name].role );
+        console.log("Spawned new creep: " + name );
     }
 
     function defendRoom(roomName) {
