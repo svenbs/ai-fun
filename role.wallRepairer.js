@@ -13,7 +13,8 @@ module.exports = {
             // switch state
             creep.memory.working = true;
             // Delete SourceID
-            delete creep.memory.sourceid;
+            delete creep.memory.source;
+            delete creep.memory.container;
         }
 
         // if creep is supposed to repair something
@@ -26,7 +27,7 @@ module.exports = {
             var target = undefined;
 
             // loop with increasing percentages
-            for (let percentage = 0.2; percentage <= 1; percentage = percentage + 0.2){
+            for (let percentage = 0.02; percentage <= 1; percentage = percentage + 0.02) {
                 // find a wall with less than percentage hits
 
                 // for some reason this doesn't work
@@ -45,10 +46,8 @@ module.exports = {
                     // break the loop
                     break;
                 }
-                //setTimeout(function(){alert("hi")}, 1000);
-                //var timeout = setTimeout(test, 10000);
             }
-            var percentage = 100;
+            var percentage = 1;
             target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => s.structureType == STRUCTURE_WALL &&
                  s.hits / s.hitsMax < percentage
