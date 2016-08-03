@@ -4,9 +4,13 @@ module.exports = function() {
         function(creep) {
             if (creep.memory.sourceid) {
                 var source = Game.getObjectById(creep.memory.sourceid.id);
+                // Search a new Source
                 if (creep.pickup(source) == ERR_INVALID_TARGET) {
                     delete creep.memory.sourceid;
-                    creep.memory.working = true;
+                    // stop to pick up energy if at least 80% full
+                    if ( creep.carry.energy >= creep.carryCapacity*0.8 ) {
+                        creep.memory.working = true;
+                    }
                 }
                 if (creep.pickup(source) == ERR_NOT_IN_RANGE) {
                     // move towards the source

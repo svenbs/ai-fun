@@ -60,10 +60,10 @@ module.exports.loop = function () {
 
 
     // setup some minimum numbers for different roles
-    var minimumNumberOfHarvesters = 6;
+    var minimumNumberOfHarvesters = 4;
     var minimumNumberOfTransporters = 2;
     var minimumNumberOfUpgraders = 1;
-    var minimumNumberOfBuilders = 3;
+    var minimumNumberOfBuilders = 4;
     var minimumNumberOfRepairers = 2;
     var minimumNumberOfWallRepairers = 5;
 
@@ -94,7 +94,7 @@ module.exports.loop = function () {
     }
     else if (numberOfTransporters < minimumNumberOfTransporters) {
         // try to spawn one
-        name = Game.spawns.Spawn1.createCustomCreep(energy, 'harvester');
+        name = Game.spawns.Spawn1.createCustomCreep(energy, 'transporter');
         //name = Game.spawns.Spawn1.createCreep([MOVE,CARRY,CARRY,CARRY], undefined, { role: 'transporter', working: false });
         if (name == ERR_NOT_ENOUGH_ENERGY && numberOfTransporters == 0) {
             // spawn one with what is available
@@ -133,4 +133,18 @@ module.exports.loop = function () {
     if (!(name == undefined) && !(name < 0)) {
         console.log("Spawned new creep: " + name);
     }
+    
+    function defendRoom(roomName) {
+    
+        var hostiles = Game.rooms[roomName].find(FIND_HOSTILE_CREEPS);
+    
+        if(hostiles.length > 0) {
+            var username = hostiles[0].owner.username;
+            Game.notify(`User ${username} spotted in room ${roomName}`);
+            var towers = Game.rooms[roomName].find(
+                FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
+            towers.forEach(tower => tower.attack(hostiles[0]));
+        }
+    }
+    defendRoom('E57S44');
 };
