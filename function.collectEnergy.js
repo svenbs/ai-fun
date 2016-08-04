@@ -8,12 +8,12 @@ module.exports = function() {
                 if (sources) {
                     // select random source
                     var random = Math.floor(Math.random() * (sources.length - 1 + 1)) + 0;
-                    creep.memory.source = sources[random];
+                    creep.memory.source = sources[random];    
                 }
             }
             // if no dropped energy try storage
             if (!creep.memory.container) {
-                creep.memory.container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                creep.memory.container = creep.pos.findClosestByPath(FIND_STRUCTURES, { 
                     filter: (s) => (s.structureType == STRUCTURE_CONTAINER &&
                                     s.store[RESOURCE_ENERGY] > 0 )
                 });

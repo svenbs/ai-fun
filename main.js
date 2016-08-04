@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-// import modules
-require('prototype.spawn')();
-=======
 // @todo: renew creeps
 // @todo: rewrite spawn-logic (SpawnManager) - Creep Bodys by percentage
 // @todo: create squad logic, attack and defend rooms
