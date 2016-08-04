@@ -1,9 +1,3 @@
-// @todo: renew creeps
-// @todo: rewrite spawn-logic (SpawnManager) - Creep Bodys by percentage
-// @todo: create squad logic, attack and defend rooms
-// @todo: create remote harvester logic
-// @todo: rewrite collectEnergy function to improve effectiveness
-
 // import modules
 require('prototype.spawn')();
 require('creep.manager')();
@@ -24,14 +18,34 @@ module.exports.loop = function () {
         }
     }
 
+
+    // setup some minimum numbers for different roles
+    var minimumNumberOfHarvesters = 3;
+    var minimumNumberOfTransporters = 2;
+    var minimumNumberOfUpgraders = 1;
+    var minimumNumberOfBuilders = 1;
+    var minimumNumberOfRepairers = 1;
+    var minimumNumberOfWallRepairers = 1;
+
+    // count the number of creeps alive for each role
+    // _.sum will count the number of properties in Game.creeps filtered by the
+    //  arrow function, which checks for the creep being a harvester
+    var numberOfHarvesters = _.sum(Game.creeps, (c) => c.memory.role == 'harvester');
+    var numberOfTransporters = _.sum(Game.creeps, (c) => c.memory.role == 'transporter');
+    var numberOfUpgraders = _.sum(Game.creeps, (c) => c.memory.role == 'upgrader');
+    var numberOfBuilders = _.sum(Game.creeps, (c) => c.memory.role == 'builder');
+    var numberOfRepairers = _.sum(Game.creeps, (c) => c.memory.role == 'repairer');
+    var numberOfWallRepairers = _.sum(Game.creeps, (c) => c.memory.role == 'wallRepairer');
+
+
     // for every creep name in Game.creeps
     for (let name in Game.creeps) {
         // get the creep object
         var creep = Game.creeps[name];
 
-        if (creep.ticksToLive <= 200 || creep.memory.renewing == true)  {
+        if (creep.memory.renewing == true || creep.ticksToLive <= CREEP_LIFE_TIME * 0.2)  {
             creep.memory.renewing = true;
-            if (creep.renew(Game.spawns.Spawn1) == 1) {
+            if (creep.renew(Game.spawns.Spawn1) == 1) { // @todo: select spawner in creep room
                 continue;
             }
         }
@@ -61,6 +75,7 @@ module.exports.loop = function () {
         }
     }
 
+
     var towers = Game.rooms.E57S44.find(FIND_STRUCTURES, {
         filter: (s) => s.structureType == STRUCTURE_TOWER
     });
@@ -72,23 +87,6 @@ module.exports.loop = function () {
     }
 
 
-    // setup some minimum numbers for different roles
-    var minimumNumberOfHarvesters = 4;
-    var minimumNumberOfTransporters = 2;
-    var minimumNumberOfUpgraders = 1;
-    var minimumNumberOfBuilders = 2;
-    var minimumNumberOfRepairers = 2;
-    var minimumNumberOfWallRepairers = 2;
-
-    // count the number of creeps alive for each role
-    // _.sum will count the number of properties in Game.creeps filtered by the
-    //  arrow function, which checks for the creep being a harvester
-    var numberOfHarvesters = _.sum(Game.creeps, (c) => c.memory.role == 'harvester');
-    var numberOfTransporters = _.sum(Game.creeps, (c) => c.memory.role == 'transporter');
-    var numberOfUpgraders = _.sum(Game.creeps, (c) => c.memory.role == 'upgrader');
-    var numberOfBuilders = _.sum(Game.creeps, (c) => c.memory.role == 'builder');
-    var numberOfRepairers = _.sum(Game.creeps, (c) => c.memory.role == 'repairer');
-    var numberOfWallRepairers = _.sum(Game.creeps, (c) => c.memory.role == 'wallRepairer');
 
     var energy = Game.spawns.Spawn1.room.energyCapacityAvailable;
     var name = undefined;

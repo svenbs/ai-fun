@@ -1,20 +1,35 @@
-// @todo: Stop renewing better creeps
+var utilities = require('utilities');
 
 module.exports = function() {
     // a function to run the logic for this role
+    // @todo: Queue renewings
+    // @todo: Do not renew creeps if above limit
 	Creep.prototype.renew = 
 		function(spawn) {
         	if (!spawn) {
             	throw "No spawn for renewing defined."
         	}
 
-        	// if spawning don't renew creeps
+            if (this.room.energyAvailable < spawn.room.energyCapacityAvailable * 0.1) {
+                // Send creeps back to work if not enough energy
+                delete this.memory.renewing;
+                return 0;
+            }
+
+            var cost = utilities.getBodyCost(this);
+            if (cost < spawn.room.energyCapacityAvailable * 0.75) {
+                // Do not renew cheap creeps, they'll be replaced with better ones
+                return 0;
+            }
+
         	if (spawn.spawning) {
-        		return 1;
+                // if spawning don't renew creeps, send them back to work
+                delete this.memory.renewing;
+        		return 0;
         	}
         	// stop renewing early
-        	if (spawn.energy <= spawn.energyCapacity * 0.1) {
-        		this.memory.renewing = false;
+        	if (this.ticksToLive > CREEP_LIFE_TIME * 0.3 && spawn.room.energyAvailable <= spawn.room.energyCapacityAvailable * 0.1) {
+        		delete this.memory.renewing;
         		// breaking out of renewing
         		return 1;
         	}
@@ -29,7 +44,7 @@ module.exports = function() {
 				return 1;
 			}
 			else if (renewState == ERR_FULL) {
-				this.memory.renewing = false;
+				delete this.memory.renewing;
 			}
     	}
 }

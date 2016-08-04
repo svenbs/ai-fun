@@ -1,1 +1,1 @@
-# ai-tests
+# ai-fun

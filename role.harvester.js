@@ -10,7 +10,7 @@ module.exports = {
         if (creep.memory.working == false) {
             // find closest source
             var source = creep.pos.findClosestByPath(FIND_SOURCES, {
-                filter: (s) => s.energy > 0 || s.ticksToRegeneration < 200
+                filter: (s) => s.energy > 0 || s.ticksToRegeneration < 150
             });
             // try to harvest energy, if the source is not in range
             if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
