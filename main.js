@@ -1,5 +1,16 @@
+<<<<<<< HEAD
 // import modules
 require('prototype.spawn')();
+=======
+// @todo: renew creeps
+// @todo: rewrite spawn-logic (SpawnManager) - Creep Bodys by percentage
+// @todo: create squad logic, attack and defend rooms
+// @todo: create remote harvester logic
+// @todo: rewrite collectEnergy function to improve effectiveness
+
+// import modules
+require('prototype.spawn')();
+require('creep.manager')();
 var roleHarvester = require('role.harvester');
 var roleTransporter = require('role.transporter');
 var roleUpgrader = require('role.upgrader');
@@ -22,6 +33,12 @@ module.exports.loop = function () {
         // get the creep object
         var creep = Game.creeps[name];
 
+        if (creep.ticksToLive <= 200 || creep.memory.renewing == true)  {
+            creep.memory.renewing = true;
+            if (creep.renew(Game.spawns.Spawn1) == 1) {
+                continue;
+            }
+        }
         // if creep is harvester, call harvester script
         if (creep.memory.role == 'harvester') {
             roleHarvester.run(creep);
@@ -63,9 +80,9 @@ module.exports.loop = function () {
     var minimumNumberOfHarvesters = 4;
     var minimumNumberOfTransporters = 2;
     var minimumNumberOfUpgraders = 1;
-    var minimumNumberOfBuilders = 4;
+    var minimumNumberOfBuilders = 2;
     var minimumNumberOfRepairers = 2;
-    var minimumNumberOfWallRepairers = 5;
+    var minimumNumberOfWallRepairers = 2;
 
     // count the number of creeps alive for each role
     // _.sum will count the number of properties in Game.creeps filtered by the
@@ -131,7 +148,7 @@ module.exports.loop = function () {
     // print name to console if spawning was a success
     // name > 0 would not work since string > 0 returns false
     if (!(name == undefined) && !(name < 0)) {
-        console.log("Spawned new creep: " + name);
+        console.log("Spawned new creep: " + name );
     }
 
     function defendRoom(roomName) {

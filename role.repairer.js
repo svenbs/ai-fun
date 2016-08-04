@@ -13,7 +13,8 @@ module.exports = {
             // switch state
             creep.memory.working = true;
             // Delete SourceID
-            delete creep.memory.sourceid;
+            delete creep.memory.source;
+            delete creep.memory.container;
         }
 
         // if creep is supposed to repair something

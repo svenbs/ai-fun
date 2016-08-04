@@ -7,13 +7,29 @@ module.exports = {
             creep.memory.working = false;
         }
         // if creep is supposed to harvest energy from source
-        else {
+        if (creep.memory.working == false) {
             // find closest source
-            var source = creep.pos.findClosestByPath(FIND_SOURCES);
+            var source = creep.pos.findClosestByPath(FIND_SOURCES, {
+                filter: (s) => s.energy > 0 || s.ticksToRegeneration < 200
+            });
             // try to harvest energy, if the source is not in range
             if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
                 // move towards the source
                 creep.moveTo(source);
+            }
+        }
+        if (creep.carry.energy == creep.carryCapacity) {
+            creep.memory.working = true;
+        }
+        if (creep.memory.working == true) {
+            // find closest container
+            var container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                filter: (s) => (s.structureType == STRUCTURE_CONTAINER &&
+                                s.store[RESOURCE_ENERGY] < s.storeCapacity)
+            });
+            // try to put energy into container
+            if (creep.transfer(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(container);
             }
         }
     }
