@@ -1,3 +1,5 @@
+// @todo: createManagedCreep
+
 StructureSpawn.prototype.createManagedCreep =
     function(options) {
         if (!options) {
@@ -31,7 +33,6 @@ StructureSpawn.prototype.createManagedCreep =
             }
         }
     }
-
 
 /**
  * Handles logic for spawning creeps in rooms, and spawning creeps to go

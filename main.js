@@ -6,6 +6,7 @@
 
 // import modules
 require('prototype.spawn')();
+require('creep.manager')();
 var roleHarvester = require('role.harvester');
 var roleTransporter = require('role.transporter');
 var roleUpgrader = require('role.upgrader');
@@ -28,6 +29,12 @@ module.exports.loop = function () {
         // get the creep object
         var creep = Game.creeps[name];
 
+        if (creep.ticksToLive <= 200 || creep.memory.renewing == true)  {
+            creep.memory.renewing = true;
+            if (creep.renew(Game.spawns.Spawn1) == 1) {
+                continue;
+            } 
+        }
         // if creep is harvester, call harvester script
         if (creep.memory.role == 'harvester') {
             roleHarvester.run(creep);

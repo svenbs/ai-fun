@@ -47,12 +47,6 @@ module.exports = {
                     break;
                 }
             }
-            var percentage = 1;
-            target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-            filter: (s) => s.structureType == STRUCTURE_WALL &&
-                 s.hits / s.hitsMax < percentage
-            });
-
 
             // if we find a wall that has to be repaired
             if (target != undefined) {
