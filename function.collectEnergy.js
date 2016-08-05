@@ -23,7 +23,7 @@ module.exports = function() {
             if (creep.memory.source) {
                 var source = Game.getObjectById(creep.memory.source.id);
                 // stop to pick up energy if at least 80% full
-                if ( creep.carry.energy >= creep.carryCapacity*0.8 ) {
+                if ( creep.carry.energy >= creep.carryCapacity*0.5 ) {
                     creep.memory.working = true;
                 }
                 // source is depleted search a new one
@@ -44,7 +44,7 @@ module.exports = function() {
                     return;
                 }
 
-                if ( creep.carry.energy >= creep.carryCapacity*0.8 ) {
+                if ( creep.carry.energy >= creep.carryCapacity*0.5 ) {
                     creep.memory.working = true;
                     delete creep.memory.container;
                     return;
@@ -53,11 +53,6 @@ module.exports = function() {
                 if (creep.withdraw(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                     creep.moveTo(container);
                 }
-            }
-            else if (creep.memory.container == null && creep.carry.energy > 0) {
-                delete creep.memory.container;
-                creep.memory.working = true;
-                return;
             }
         }
 }
