@@ -1,34 +1,122 @@
-module.exports = {
-    // a function to run the logic for this role
-    run: function(creep) {
-        // if creep is bringing energy to the controller but has no energy left
-        if (creep.memory.working == true && creep.carry.energy == 0) {
-            // switch state
-            creep.memory.working = false;
-        }
-        // if creep is harvesting energy but is full
-        else if (creep.memory.working == false && creep.carry.energy == creep.carryCapacity) {
-            // switch state
-            creep.memory.working = true;
-            // Delete SourceID
-            delete creep.memory.source;
-            delete creep.memory.container;
-        }
+var utilities = require('utilities');
 
-        // if creep is supposed to transfer energy to the controller
-        if (creep.memory.working == true) {
-            // instead of upgraderController we could also use:
-            // if (creep.transfer(creep.room.controller, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+/**
+ * Make creep upgrade Controller.
+ */
+Creep.prototype.performUpgrade = function() {
+    // Upgrade controller.
+    if (this.pos.getRangeTo(this.room.controller) > 3) {
+        this.moveTo(this.room.controller);
+    }
+    else {
+        this.upgradeController(this.room.controller);
+    }
 
-            // try to upgrade the controller
-            if (creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
-                // if not in range, move towards the controller
-                creep.moveTo(creep.room.controller);
+    // Keep getting energy from link or container to ideally never stop upgrading
+    // Only real upgrader do this. Otherwise other primary roles would never stop upgrading
+    if (this.memory.role == 'upgrader' && _.sum(this.carry) < this.carryCapacity) {
+        var withdrawn = false;
+        // @todo: Define room.memory.controllerLink
+        if (this.room.memory.controllerLink) {
+            var controllerLink = Game.getObjectById(this.room.memory.controllerLink);
+            if (controllerLink.energy > 50 && this.pos.getRangeTo(controllerLink) <= 1) {
+                if (this.withdraw(controllerLink, RESOURCE_ENERGY) == OK) {
+                    withdrawn = true;
+                }
             }
         }
-        // if creep is supposed to harvest energy from source
-        else {
-            creep.collectEnergy(creep);
+        // @todo: Define room.memory.controllerContainer
+        if (!withdrawn && this.room.memory.controllerContainer) {
+            var controllerContainer = Game.getObjectById(this.room.memory.controllerContainer);
+            if (controllerContainer.storage.energy > 50 && this.pos.getRangeTo(controllerContainer) <= 1) {
+                if (this.withdraw(controllerContainer, RESOURCE_ENERGY) == OK) {
+                    withdrawn = true;
+                }
+            }
         }
     }
+    return true;
 };
+
+/**
+ * Makes the creep gather energy as an upgrader.
+ */
+Creep.prototype.performGetUpgraderEnergy = function () {
+    var creep = this;
+    // Ideally, get energy from a link or container close to the controller
+    if (creep.room.memory.controllerLink) {
+        var target = Game.getObjectById(creep.room.memory.controllerLink);
+        if (target && target.energy > 50) {
+            if (creep.pos.getRangeTo(target) > 1) {
+                creep.moveTo(target);
+            }
+            else {
+                creep.withdraw(target, RESOURCE_ENERGY);
+            }
+            return true;
+        }
+    }
+
+    if (creep.room.memory.controllerContainer) {
+        var target = Game.getObjectById(controllerContainer);
+        if (target && target.energy > 50) {
+            if (creep.pos.getRangeTo(target) > 1) {
+                creep.moveTo(target);
+            }
+            else {
+                creep.withdraw(target, RESOURCE_ENERGY);
+            }
+            return true;
+        }
+    }
+
+    // Could also try to get energy from another nearby container.
+    var otherContainers = creep.pos.findInRange(FIND_STRUCTURES, 3, {
+        filter: (structure) => structure.structureType == STRUCTURE_CONTAINER && structure.store.energy > 0 && structure.id != creep.room.memory.controllerContainer
+    });
+    if (otherContainers && otherContainers.length > 0) {
+        if (creep.pos.getRangeTo(otherContainers[0]) > 1) {
+            creep.moveTo(otherContainers[0]);
+        }
+        else {
+            creep.withdraw(otherContainers[0], RESOURCE_ENERGY);
+        }
+        return true;
+    }
+
+    // Otherwise get energy from anywhere.
+    if (creep.performGetEnergy()) {
+        return true;
+    }
+    else if (creep.carry.energy > 0) {
+        creep.setUpgraderState(true);
+    }
+    return false;
+}
+
+/**
+ * Set creep into or out of upgrading state.
+ */
+Creep.prototype.setUpgraderState = function(upgrading) {
+    this.memory.upgrading = upgrading;
+    delete this.memory.sourceTarget;
+}
+
+/**
+ * Makes creep behave like an upgrader.
+ */
+Creep.prototype.runUpgraderLogic = function() {
+    if (this.memory.upgrading && this.carry.energy == 0) {
+        this.setUpgraderState(false);
+    }
+    if (!this.memory.upgrading && this.carry.energy == this.carryCapacity) {
+        this.setUpgraderState(true);
+    }
+
+    if (this.memory.upgrading) {
+        return this.performUpgrade();
+    }
+    else {
+        return this.performGetUpgraderEnergy();
+    }
+}

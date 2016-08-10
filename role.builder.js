@@ -1,42 +1,60 @@
-var roleUpgrader = require('role.upgrader');
+var utilities = require('utilities');
 
-module.exports = {
-    // a function to run the logic for this role
-    run: function(creep) {
-        // if creep is trying to complete a constructionSite but has no energy left
-        if (creep.memory.working == true && creep.carry.energy == 0) {
-            // switch state
-            creep.memory.working = false;
-        }
-        // if creep is harvesting energy but is full
-        else if (creep.memory.working == false && creep.carry.energy == creep.carryCapacity) {
-            // switch state
-            creep.memory.working = true;
-            // Delete SourceID
-            delete creep.memory.source;
-            delete creep.memory.container;
-        }
-
-        // if creep is supposed to complete a constructionSite
-        if (creep.memory.working == true) {
-            // find closest constructionSite
-            var constructionSite = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
-            // if one is found
-            if (constructionSite != undefined) {
-                // try to build, if the constructionSite is not in range
-                if (creep.build(constructionSite) == ERR_NOT_IN_RANGE) {
-                    // move towards the constructionSite
-                    creep.moveTo(constructionSite);
-                }
-            }
-            // if no constructionSite is found
-            else {
-                // go upgrading the controller
-                roleUpgrader.run(creep);
-            }
-        }
-        else {
-            creep.collectEnergy(creep);
-        }
+/**
+ * Makes creep use energy to build structures
+ */
+Creep.prototype.performBuild = function() {
+    if (Game.cpu.bucket < 500) {
+        return false;
     }
-};
+
+    if (!this.memory.buildTarget) {
+        var targets = this.room.find(FIND_CONSTRUCTION_SITES);
+        if (targets.length <= 0) {
+            return false;
+        }
+
+        this.memory.buildTarget = utilities.getClosest(this, targets);
+    }
+    var best = this.memory.buildTarget;
+    if (!best) {
+        return false;
+    }
+    var target = Game.getObjectById(best);
+    if (!target) {
+        this.memory.buildTarget = null;
+    }
+
+    if (this.build(target) == ERR_NOT_IN_RANGE) {
+        this.moveTo(target);
+    }
+    return true;
+}
+
+/**
+ * Set this creep into or out of build mode
+ */
+Creep.prototype.setBuilderState = function(building) {
+    this.memory.building = building;
+    delete this.memory.buildTarget;
+    delete this.memory.resourceTarget;
+}
+
+/**
+ * Make creep behave like a builder
+ */
+Creep.prototype.runBuilderLogic = function() {
+    if (this.memory.building && this.carry.energy == 0) {
+        this.setBuilderState(false);
+    }
+    else if (!this.memory.building && this.carry.energy == this.carryCapacity) {
+        this.setBuilderState(true);
+    }
+
+    if (this.memory.building) {
+        this.performBuild();
+    }
+    else {
+        this.performGetEnergy();
+    }
+}
