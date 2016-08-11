@@ -26,13 +26,12 @@ Creep.prototype.performUpgrade = function() {
 		}
 		if (!withdrawn && this.room.memory.controllerContainer) {
 			var controllerContainer = Game.getObjectById(this.room.memory.controllerContainer);
-			if (controllerContainer.storage.energy > 50 && this.pos.getRangeTo(controllerContainer) <= 1) {
-				if (this.withdraw(this.room.memory.controllerContainer, RESOURCE_ENERGY) == OK) {
+			if (controllerContainer.store[RESOURCE_ENERGY] > 50 && this.pos.getRangeTo(controllerContainer) <= 1) {
+				if (this.withdraw(controllerContainer, RESOURCE_ENERGY) == OK) {
 					withdrawn = true;
 				}
 			}
 		}
-		console.log('Upgrader withdrawn: ' withdrawn);
 	}
 	return true;
 };
@@ -58,7 +57,7 @@ Creep.prototype.performGetUpgraderEnergy = function () {
 
 	if (creep.room.memory.controllerContainer) {
 		var target = Game.getObjectById(creep.room.memory.controllerContainer);
-		if (target && target.energy > 50) {
+		if (target && target.store[RESOURCE_ENERGY] > 50) {
 			if (creep.pos.getRangeTo(target) > 1) {
 				creep.moveTo(target);
 			}
@@ -99,6 +98,7 @@ Creep.prototype.performGetUpgraderEnergy = function () {
 Creep.prototype.setUpgraderState = function(upgrading) {
 	this.memory.upgrading = upgrading;
 	delete this.memory.sourceTarget;
+	delete this.memory.tempRole;
 }
 
 /**

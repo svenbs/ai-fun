@@ -5,6 +5,7 @@ var profiler = require('screeps-profiler');
 require('utilities');
 
 require('role.harvester');
+require('role.harvester.remote');
 require('role.transporter');
 require('role.upgrader');
 require('role.builder');
@@ -58,6 +59,9 @@ Creep.prototype.runLogic = function() {
 	switch (role) {
 			case "harvester":
 				creep.runHarvesterLogic();
+				break;
+			case "harvester.remote":
+				creep.runRemoteHarvesterLogic();
 				break;
 			case "transporter":
 				creep.runTransporterLogic();

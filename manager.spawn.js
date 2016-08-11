@@ -250,6 +250,118 @@ Room.prototype.manageSpawns = function() {
 			}
 		}
 
+		// Remote harvesting temporarily disabled until CPU is better.
+		if (Game.cpu.bucket < 8000) {
+			continue;
+		}
+
+		// Remote Harvesting
+		var harvestFlags = _.filter(Game.flags, (flag) => flag.name.startsWith('HarvestRemote'));
+		for (var i in harvestFlags) {
+			let flag = harvestFlags[i];
+			let isSpecificFlag;
+
+			// Don't harvest from claimed rooms
+			if (flag.name.startsWith('HarvestRemote:')) {
+				let part = flag.name.split(':');
+				if (part[1] == spawn.pos.roomName) {
+					console.log('ja');
+				}
+				if (part[1] && part[1] != spawn.pos.roomName) {
+					continue;
+				}
+				isSpecificFlag = true;
+			}
+
+			if (Game.map.getRoomLinearDistance(spawn.pos.roomName, flag.pos.roomName) > 1 && !isSpecificFlag) {
+				continue;
+			}
+
+			// @todo: Send bruiser to clean up unsafe rooms
+
+			// it's safe to harvest
+			var doSpawn = true;
+			var flagPosition = utilities.decodePosition(flag.pos);
+			var deliverPosition = spawn.pos;
+			if (spawn.room.storage) {
+				deliverPosition = spawn.room.storage.pos;
+			}
+			deliverPosition = utilities.encodePosition(deliverPosition);
+
+			// Cache path when possible.
+			try {
+				utilities.precalculatePaths(spawn.room, flag);
+			}
+			catch (e) {
+				console.log('Error in pathfinding:', e);
+				console.log(e.stack);
+			}
+
+			if (spawn.room.memory.remoteHarvesting && spawn.room.memory.remoteHarvesting[flagPosition]) {
+				var memory = spawn.room.memory.remoteHarvesting[flagPosition];
+				doSpawn = false;
+
+				memory.harvesters = [];
+				var haulCount = 0;
+				var harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester.remote' && creep.memory.storage == position && creep.memory.source == flagPosition);
+				var haulers = _.filter(Game.creeps, (creep) => creep.memory.role == 'hauler' && creep.memory.storage == position && creep.memory.source == flagPosition);
+
+				var maxRemoteHarvesters = 1;
+				var maxRemoteHaulers = 0;
+				if (memory.revenue > 0 || memory.hasContainer) {
+					// @todo Calculate number of needed haulers.
+					maxRemoteHaulers = 1;
+
+					if (Game.rooms[flag.pos.roomName]) {
+						let room = Game.rooms[flag.pos.roomName];
+						if (room.controller && (room.controller.my || (room.controller.reservation && room.controller.reservation.username == 'Mirroar'))) {
+							maxRemoteHaulers = 2;
+						}
+					}
+				}
+				var maxCarryParts = null;
+				if (memory.travelTime) {
+					maxCarryParts = Math.ceil(memory.travelTime * SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME / CARRY_CAPACITY);
+					//console.log('Need', maxCarryParts, 'carry parts when transporting remotely harvested energy from', flagPosition);
+				}
+
+				for (var j in harvesters) {
+					var creep = harvesters[j];
+					//console.log(creep.memory.storage, position, creep.memory.source, flagPosition);
+					if (!memory.travelTime || creep.ticksToLive > memory.travelTime || creep.ticksToLive > 500 || creep.spawning) {
+						memory.harvesters.push(creep.id);
+					}
+				}
+				/*if (flag.pos.roomName == 'E49S46')
+				console.log('--', flagPosition, 'harvesters:', memory.harvesters.length, '/', maxRemoteHarvesters);//*/
+				if (memory.harvesters.length < maxRemoteHarvesters) {
+					doSpawn = true;
+				}
+
+				for (var j in haulers) {
+					let creep = haulers[j];
+					//console.log(creep.memory.storage, position, creep.memory.source, flagPosition);
+					if (!memory.travelTime || creep.ticksToLive > memory.travelTime || creep.ticksToLive > 500 || creep.spawning) {
+						haulCount++;
+					}
+				}
+				/*if (flag.pos.roomName == 'E49S46')
+				console.log('--', flagPosition, 'haulers:', haulCount, '/', maxRemoteHaulers, '@', maxCarryParts);//*/
+				if (haulCount < maxRemoteHaulers && !doSpawn) {
+					// Spawn hauler if necessary, but not if harvester is needed first.
+					if (spawn.spawnHauler(flag.pos, maxCarryParts)) {
+						return true;
+					}
+				}
+			}
+
+			if (doSpawn) {
+				if (spawn.spawnRemoteHarvester(flag.pos)) {
+					return true;
+				}
+			}
+		}
+
 		// Last but not least: Scouts.
 		// @todo Spawn scout closest to where we're gonna send it.
 		/*
@@ -264,6 +376,53 @@ Room.prototype.manageSpawns = function() {
 		// Let only one spawner spawn each tickt to prevent confusion.
 		break;
 	}
+};
+
+/**
+ * Spawn a remote harvester
+ */
+StructureSpawn.prototype.spawnRemoteHarvester = function (targetPosition) {
+	var bodyWeights = {move: 0.5, work: 0.2, carry: 0.3};
+	var maxParts = {work: 3};
+	// Use less work parts if room is not reserved yet.
+	if (Game.rooms[targetPosition.roomName]) {
+		let room = Game.rooms[targetPosition.roomName];
+		if (room.controller && (room.controller.my || (room.controller.reservation && room.controller.reservation.username == 'inde'))) {
+			maxParts.work = 6;
+		}
+	}
+
+	// Use less move parts if a road has already been established.
+	if (this.room.memory.remoteHarvesting && this.room.memory.remoteHarvesting[utilities.encodePosition(targetPosition)] && this.room.memory.remoteHarvesting[utilities.encodePosition(targetPosition)].revenue > 0) {
+		// @todo Use calculated max size like normal harvesters.
+		bodyWeights = {move: 0.35, work: 0.55, carry: 0.1};
+	}
+
+	var position = this.pos;
+	if (this.room.storage) {
+		position = this.room.storage.pos;
+	}
+
+	var result = this.createManagedCreep({
+		role: 'harvester.remote',
+		bodyWeights: bodyWeights,
+		maxParts: maxParts,
+		memory: {
+			storage: utilities.encodePosition(position),
+			source: utilities.encodePosition(targetPosition),
+		},
+	});
+
+	if (result) {
+		var cost = 0;
+		for (var part in Memory.creeps[result].body) {
+			var count = Memory.creeps[result].body[part];
+			cost += BODYPART_COST[part] * count;
+		}
+		stats.addRemoteHarvestCost(this.room.name, utilities.encodePosition(targetPosition), cost);
+	}
+
+	return result;
 };
 
 /**
