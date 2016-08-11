@@ -71,6 +71,19 @@ Creep.prototype.runLogic = function() {
 
 
 var main = {
+	defendRoom: function(roomName) {
+
+		var hostiles = Game.rooms[roomName].find(FIND_HOSTILE_CREEPS);
+
+	if(hostiles.length > 0) {
+			var username = hostiles[0].owner.username;
+			Game.notify(`User ${username} spotted in room ${roomName}`);
+			var towers = Game.rooms[roomName].find(
+				FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
+			towers.forEach(tower => tower.attack(hostiles[0]));
+		}
+	},
+
 	manageCreeps: function () {
 		for (let name in Game.creeps) {
 			var creep = Game.creeps[name];
@@ -178,5 +191,10 @@ module.exports.loop = function () {
 		catch (e) {
 			console.log('Error in intelManager.scout:', e);
 		}
+
+		for (let roomName in Game.rooms) {
+			main.defendRoom(roomName);
+		}
+
 	});
 };

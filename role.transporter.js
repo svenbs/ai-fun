@@ -74,7 +74,7 @@ Creep.prototype.getAvailableEnergySources = function () {
 	for (var i in targets) {
 		var target = targets[i];
 		var option = {
-			priority: 3,
+			priority: creep.memory.role == 'transporter' ? 0 : 3,
 			weight: target.store[RESOURCE_ENERGY] / 100,
 			type: 'structure',
 			object: target,
@@ -261,48 +261,48 @@ Creep.prototype.getAvailableDeliveryTargets = function () {
 		}
 
 		// Deliver excess energy to storage.
-        if (storage) {
-            options.push({
-                priority: 0,
-                weight: 0,
-                type: 'structure',
-                object: storage,
-                resourceType: RESOURCE_ENERGY,
-            });
-        }
-        else {
-            var storagePosition = creep.room.getStorageLocation();
-            if (storagePosition) {
-                options.push({
-                    priority: 0,
-                    weight: 0,
-                    type: 'position',
-                    object: creep.room.getPositionAt(storagePosition.x, storagePosition.y),
-                    resourceType: RESOURCE_ENERGY,
-                });
-            }
-        }
+		if (storage) {
+			options.push({
+				priority: 0,
+				weight: 0,
+				type: 'structure',
+				object: storage,
+				resourceType: RESOURCE_ENERGY,
+			});
+		}
+		else {
+			var storagePosition = creep.room.getStorageLocation();
+			if (storagePosition) {
+				options.push({
+					priority: 0,
+					weight: 0,
+					type: 'position',
+					object: creep.room.getPositionAt(storagePosition.x, storagePosition.y),
+					resourceType: RESOURCE_ENERGY,
+				});
+			}
+		}
 
-        // Deliver energy to storage link.
-        if (creep.room.memory.storageLink) {
-            var target = Game.getObjectById(creep.room.memory.storageLink);
-            if (target && target.energy < target.energyCapacity) {
-                let option = {
-                    priority: 5,
-                    weight: (target.energyCapacity - target.energy) / 100, // @todo Also factor in distance.
-                    type: 'structure',
-                    object: target,
-                    resourceType: RESOURCE_ENERGY,
-                };
+		// Deliver energy to storage link.
+		if (creep.room.memory.storageLink) {
+			var target = Game.getObjectById(creep.room.memory.storageLink);
+			if (target && target.energy < target.energyCapacity) {
+				let option = {
+					priority: 5,
+					weight: (target.energyCapacity - target.energy) / 100, // @todo Also factor in distance.
+					type: 'structure',
+					object: target,
+					resourceType: RESOURCE_ENERGY,
+				};
 
-                if (creep.pos.getRangeTo(target) > 3) {
-                    // Don't go out of your way to fill the link, do it when energy is taken out of storage.
-                    option.priority = 4;
-                }
+				if (creep.pos.getRangeTo(target) > 3) {
+					// Don't go out of your way to fill the link, do it when energy is taken out of storage.
+					option.priority = 4;
+				}
 
-                options.push(option);
-            }
-        }
+				options.push(option);
+			}
+		}
 	}
 
 	return options;
