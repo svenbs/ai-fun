@@ -1,6 +1,7 @@
 var gameState = require('game.state');
 var utilities = require('utilities');
 var intelManager = require('manager.intel');
+var stats = require('stats');
 
 StructureSpawn.prototype.createManagedCreep = function(options) {
 	if (!options) {
@@ -264,9 +265,6 @@ Room.prototype.manageSpawns = function() {
 			// Don't harvest from claimed rooms
 			if (flag.name.startsWith('HarvestRemote:')) {
 				let part = flag.name.split(':');
-				if (part[1] == spawn.pos.roomName) {
-					console.log('ja');
-				}
 				if (part[1] && part[1] != spawn.pos.roomName) {
 					continue;
 				}
@@ -281,12 +279,12 @@ Room.prototype.manageSpawns = function() {
 
 			// it's safe to harvest
 			var doSpawn = true;
-			var flagPosition = utilities.decodePosition(flag.pos);
-			var deliverPosition = spawn.pos;
+			var flagPosition = utilities.encodePosition(flag.pos);
+			var position = spawn.pos;
 			if (spawn.room.storage) {
-				deliverPosition = spawn.room.storage.pos;
+				position = spawn.room.storage.pos;
 			}
-			deliverPosition = utilities.encodePosition(deliverPosition);
+			position = utilities.encodePosition(position);
 
 			// Cache path when possible.
 			try {
@@ -314,7 +312,7 @@ Room.prototype.manageSpawns = function() {
 
 					if (Game.rooms[flag.pos.roomName]) {
 						let room = Game.rooms[flag.pos.roomName];
-						if (room.controller && (room.controller.my || (room.controller.reservation && room.controller.reservation.username == 'Mirroar'))) {
+						if (room.controller && (room.controller.my || (room.controller.reservation && room.controller.reservation.username == 'inde'))) {
 							maxRemoteHaulers = 2;
 						}
 					}
@@ -327,7 +325,6 @@ Room.prototype.manageSpawns = function() {
 
 				for (var j in harvesters) {
 					var creep = harvesters[j];
-					//console.log(creep.memory.storage, position, creep.memory.source, flagPosition);
 					if (!memory.travelTime || creep.ticksToLive > memory.travelTime || creep.ticksToLive > 500 || creep.spawning) {
 						memory.harvesters.push(creep.id);
 					}
@@ -347,16 +344,18 @@ Room.prototype.manageSpawns = function() {
 				}
 				/*if (flag.pos.roomName == 'E49S46')
 				console.log('--', flagPosition, 'haulers:', haulCount, '/', maxRemoteHaulers, '@', maxCarryParts);//*/
-				if (haulCount < maxRemoteHaulers && !doSpawn) {
+				// @todo: Define SpawnHauler
+				/*if (haulCount < maxRemoteHaulers && !doSpawn) {
 					// Spawn hauler if necessary, but not if harvester is needed first.
 					if (spawn.spawnHauler(flag.pos, maxCarryParts)) {
 						return true;
 					}
-				}
+				}*/
 			}
 
 			if (doSpawn) {
 				if (spawn.spawnRemoteHarvester(flag.pos)) {
+					spawn.room.memory.remoteHarvesting[flagPosition] = memory;
 					return true;
 				}
 			}

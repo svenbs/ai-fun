@@ -23,7 +23,7 @@ Creep.prototype.performBuildRoads = function() {
 Creep.prototype.performRemoteHarvest = function() {
 	var creep = this;
 	var source;
-	var sourcePosition = utilities.decodePositions(creep.memory.source);
+	var sourcePosition = utilities.decodePosition(creep.memory.source);
 
 	// Move creep to source position.
 	if (sourcePosition.roomName != creep.pos.roomName) {
@@ -75,7 +75,7 @@ Creep.prototype.performRemoteHarvest = function() {
 /**
  * Deliver gathered resources
  */
-Creep.prototype.performHarvesterDelivery = function() {
+Creep.prototype.performRemoteHarvesterDelivery = function() {
 	var creep = this;
 	var targetPosition = utilities.decodePosition(creep.memory.storage);
 	var harvestMemory = Memory.rooms[utilities.decodePosition(creep.memory.storage).roomName].remoteHarvesting[creep.memory.source];
