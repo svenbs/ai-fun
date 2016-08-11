@@ -15,7 +15,6 @@ function setupProfiler() {
 			setupMemory('profile', duration || 100, filter);
 		},
 		reset: resetMemory,
-		printProfile: Profiler.printProfile,
 	};
 
 	overloadCPUCalc();
@@ -114,8 +113,7 @@ const Profiler = {
 	},
 
 	emailProfile() {
-		Memory.profiler.output = Profiler.output();
-		Game.notify(memory.profiler.output);
+		Game.notify(Profiler.output());
 	},
 
 	output() {
@@ -126,7 +124,7 @@ const Profiler = {
 			`Total: ${Memory.profiler.totalTime.toFixed(2)}`,
 			`Ticks: ${elapsedTicks}`,
 		].join('\t');
-		return [].concat(header, Profiler.lines()/*.slice(0, 20)*/, footer).join('\n');
+		return [].concat(header, Profiler.lines().slice(0, 20), footer).join('\n');
 	},
 
 	lines() {
@@ -163,9 +161,6 @@ const Profiler = {
 		{ name: 'RoomPosition', val: RoomPosition },
 		{ name: 'Source', val: Source },
 		{ name: 'Flag', val: Flag },
-
-		// Added for hivemind.
-		{ name: 'Map', val: Game.map },
 	],
 
 	record(functionName, time) {

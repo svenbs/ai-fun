@@ -1,4 +1,5 @@
 var utilities = require('utilities');
+var creepGeneral = require('creep.general');
 
 var wallHealth = {
     0: 1,
@@ -70,7 +71,7 @@ Creep.prototype.getAvailableRepairTargets = function() {
 
         option.priority -= creepGeneral.getCreepsWithOrder('repair', target.id).length;
 
-        option.push(option);
+        options.push(option);
     }
 
     return options;
@@ -127,7 +128,7 @@ Creep.prototype.performRepair = function() {
         creep.moveTo(target);
 
         if (Game.cpu.bucket > 8000) {
-            let workParts = creep.memory.body.work;
+            let workParts = creep.body.work;
             if (workParts && (creep.carry.energy > creep.carryCapacity * 0.7 || creep.carry.energy < creep.carryCapacity * 0.3)) {
                 var needsRepair = creep.pos.findClosestByRange(FIND_STRUCTURES, {
                     filter: (structure) =>{

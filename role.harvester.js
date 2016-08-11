@@ -17,14 +17,14 @@ Creep.prototype.performHarvest = function() {
         if (!creep.memory.resourceTarget) {
             // Room has no resources.
             // @todo: creep.room.sources define this object
-            //if (!creep.room.sources || creep.room.sources.length <= 0) {
-            //  return false;
-            //}
+            if (!creep.room.sources || creep.room.sources.length <= 0) {
+              return false;
+            }
 
             // @todo: creep.room.sources define this object
-            //creep.memory.resourceTarget = creep.room.sources[Math.floor(Math.random() * creep.room.sources.length)].id;
-            var sources = creep.room.find(FIND_SOURCES);
-            creep.memory.resourceTarget = sources[Math.floor(Math.random() * sources.length)].id;
+            creep.memory.resourceTarget = creep.room.sources[Math.floor(Math.random() * creep.room.sources.length)].id;
+            //var sources = creep.room.find(FIND_SOURCES);
+            //creep.memory.resourceTarget = sources[Math.floor(Math.random() * sources.length)].id;
         }
         var best = creep.memory.resourceTarget;
         if (!best) {
