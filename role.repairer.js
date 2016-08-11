@@ -159,6 +159,7 @@ Creep.prototype.performRepair = function() {
 Creep.prototype.setRepairState = function(repairing) {
     this.memory.repairing = repairing;
     delete this.memory.repairTarget;
+    delete this.memory.tempRole;
 };
 
 /**
@@ -173,7 +174,9 @@ Creep.prototype.runRepairerLogic = function() {
     }
 
     if (this.memory.repairing) {
-        return this.performRepair();
+        if (!this.performRepair()) {
+            this.memory.tempRole == 'upgrader';
+        }
     }
     else {
         return this.performGetEnergy();

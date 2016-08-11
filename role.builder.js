@@ -38,6 +38,7 @@ Creep.prototype.setBuilderState = function(building) {
     this.memory.building = building;
     delete this.memory.buildTarget;
     delete this.memory.resourceTarget;
+    delete this.memory.tempRole;
 }
 
 /**
@@ -52,7 +53,9 @@ Creep.prototype.runBuilderLogic = function() {
     }
 
     if (this.memory.building) {
-        this.performBuild();
+        if (!this.performBuild()) {
+            this.memory.tempRole = 'upgrader';
+        }
     }
     else {
         this.performGetEnergy();

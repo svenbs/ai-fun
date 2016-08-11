@@ -383,6 +383,7 @@ Creep.prototype.setTransporterState = function(delivering) {
 	delete this.memory.sourceTarget;
 	delete this.memory.deliverTarget;
 	delete this.memory.order;
+	delete this.memory.tempRole;
 };
 
 /**

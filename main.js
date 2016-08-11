@@ -46,8 +46,16 @@ Room.prototype.enhanceData = function () {
 
 Creep.prototype.runLogic = function() {
 	var creep = this;
+	let role;
 
-	switch (creep.memory.role) {
+	if (creep.memory.tempRole) {
+		role = creep.memory.tempRole;
+	}
+	else {
+		role = creep.memory.role;
+	}
+
+	switch (role) {
 			case "harvester":
 				creep.runHarvesterLogic();
 				break;
@@ -64,7 +72,7 @@ Creep.prototype.runLogic = function() {
 				creep.runRepairerLogic();
 				break;
 			default:
-				//console.log('Error when managing creep', creep.name, ':');
+				console.log('Error when managing creep', creep.name, ':');
 				break;
 		}
 };
@@ -111,10 +119,45 @@ var main = {
 	},
 
 	/**
-	 * Manage Links (TODO)
+	 * Manage Links
 	 */
 	manageLinks: function() {
-		//@TODO
+		for (let roomName in Game.rooms) {
+			let room = Game.rooms[roomName];
+
+			// Pump energy into controllerLink when possible
+			if (room.memory.controllerLink) {
+				var controllerLink = Game.getObjectById(room.memory.controllerLink);
+				if (controllerLink && controllerLink.energy <= controllerLink.energyCapacity * 0.5) {
+					var upgradeControllerSupplied = false;
+
+					if (room.memory.sources){
+						for (let id in room.memory.sources) {
+							if (room.memory.sources[id].targetLink) {
+
+								// There's a Link next to a source
+								var link = Game.getObjectById(room.memory.sources[id].targetLink);
+
+								if (!link) continue;
+
+								if (link.energy >= link.energyCapacity * 0.5 && link.cooldown <= 0) {
+									link.transferEnergy(controllerLink);
+									upgradeControllerSupplied = true;
+								}
+							}
+						}
+					}
+
+					if (!upgradeControllerSupplied && room.memory.storageLink) {
+						var storageLink = Game.getObjectById(room.memory.storageLink);
+						if (storageLink.energy >= storageLink.energyCapacity * 0.5 && storageLink.cooldown <= 0) {
+							var result = storageLink.transferEnergy(controllerLink);
+							upgradeControllerSupplied = true;
+						}
+					}
+				}
+			}
+		}
 	},
 }
 
@@ -155,7 +198,6 @@ module.exports.loop = function () {
 		var initCPUUsage = Game.cpu.getUsed() - time;
 		time = Game.cpu.getUsed();
 
-		// @todo
 		spawnManager.manageSpawns();
 
 		var spawnCPUUsage = Game.cpu.getUsed() - time;
@@ -178,8 +220,7 @@ module.exports.loop = function () {
 		var towersCPUUsage = Game.cpu.getUsed() - time;
 		time = Game.cpu.getUsed();
 
-		// @todo
-		//main.manageLinks();
+		main.manageLinks();
 
 		var linksCPUUsage = Game.cpu.getUsed() - time;
 		time = Game.cpu.getUsed();
@@ -192,6 +233,7 @@ module.exports.loop = function () {
 			console.log('Error in intelManager.scout:', e);
 		}
 
+		// @todo: put into manageTowers
 		for (let roomName in Game.rooms) {
 			main.defendRoom(roomName);
 		}
