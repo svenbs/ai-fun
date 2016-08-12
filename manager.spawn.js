@@ -262,7 +262,9 @@ Room.prototype.manageSpawns = function() {
 			let flag = harvestFlags[i];
 			let isSpecificFlag;
 
-			// Don't harvest from claimed rooms
+			// @todo: Don't harvest from reserved or claimed rooms
+
+			// Send Harvesters from defined room
 			if (flag.name.startsWith('HarvestRemote:')) {
 				let part = flag.name.split(':');
 				if (part[1] && part[1] != spawn.pos.roomName) {
