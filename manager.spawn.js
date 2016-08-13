@@ -62,6 +62,9 @@ StructureSpawn.prototype.createManagedCreep = function(options) {
 			memory.role = options.role;
 		}
 	}
+	if (options.body) {
+		memory.body = options.body;
+	}
 
 	// Generate creep name.
 	if (!Memory.creepCounter) {

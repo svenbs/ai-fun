@@ -40,7 +40,7 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 			// Find hostiles to attack
 			// @todo: define creep.memory.body.attack
 			if (creep.memory.body.attack) {
-				var hostiles = gameState.getHostiles(creep.room.roomName);
+				var hostiles = gameState.getHostiles(creep.pos.roomName);
 
 				if (hostiles && hostiles.length > 0) {
 					for (let i in hostiles) {
