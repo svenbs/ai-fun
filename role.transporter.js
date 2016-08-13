@@ -350,13 +350,15 @@ Creep.prototype.perfromDeliver = function() {
 			creep.calculateDeliveryTarget();
 			return true;
 		}
+		//console.log('Transporter: ' + creep.name + target.id); // Debug
 
 		if (creep.pos.getRangeTo(target) > 1) {
 			creep.moveTo(target);
+			return true;
 		}
-		else {
-			creep.transfer(target, creep.memory.order.resourceType);
-		}
+
+		creep.transfer(target, creep.memory.order.resourceType);
+
 		// Find another target if current one is full
 		if (target.energy && target.energy >= target.energyCapacity) {
 			creep.calculateDeliveryTarget();

@@ -49,12 +49,14 @@ Creep.prototype.performRemoteHarvest = function() {
 		creep.setRemoteHarvesterState(false);
 		return false;
 	}
-
+    console.log('remoteHarvest');
 	if (creep.pos.getRangeTo(source) > 1) {
 		creep.moveTo(source);
+		console.log('move');
 	}
 	else {
-		creep.harvest(source);
+		var result = creep.harvest(source);
+		console.log('source: ' + source + ' result : ' + result);
 	}
 
 

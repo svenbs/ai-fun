@@ -3,6 +3,8 @@ var utilities = require('utilities');
 var intelManager = require('manager.intel');
 var stats = require('stats');
 
+var Squad = require('manager.squads');
+
 StructureSpawn.prototype.createManagedCreep = function(options) {
 	if (!options) {
 		throw "No options for creep spawning defined.";
@@ -88,6 +90,7 @@ Room.prototype.manageSpawns = function() {
 	if (!this.controller || !this.controller.my) {
 		return;
 	}
+	var username = this.controller.owner.username;
 
 	var roomSpawns = this.find(FIND_STRUCTURES, {
 		filter: (structure) => structure.structureType == STRUCTURE_SPAWN
@@ -209,13 +212,18 @@ Room.prototype.manageSpawns = function() {
 			maxBuilders = Math.min(1 + numSources, Math.ceil(constructionSites.length / 5));
 		}
 
-		if (numHarvesters < 1) {
+		if (numHarvesters < 1 || (room.energyAvailable < 300 && room.energyCapacityAvailable > 500 && numHarvesters < 3)) {
 			if (spawn.spawnHarvester(true, maxHarvesterSize)) {
 				return true;
 			}
 		}
 		else if (numTransporters < 1 && containers.length > 0) {
 			if (spawn.spawnTransporter(true)) {
+				return true;
+			}
+		}
+		else if (builders.length < maxBuilders || (room.energyAvailable < 300 && room.energyCapacityAvailable > 500 && builders.length < maxBuilders)) {
+			if (spawn.spawnBuilder(true)) {
 				return true;
 			}
 		}
@@ -229,7 +237,7 @@ Room.prototype.manageSpawns = function() {
 				return true;
 			}
 		}
-		else if (upgraders.length < maxUpgraders) {
+		else if (upgraders.length < maxUpgraders || (room.energyAvailable < 300 && room.energyCapacityAvailable > 300 && maxUpgraders < 0)) {
 			if (spawn.spawnUpgrader()) {
 				return true;
 			}
@@ -250,6 +258,26 @@ Room.prototype.manageSpawns = function() {
 				return true;
 			}
 		}
+		else {
+			// Spawn squads.
+			var spawnFlags = room.find(FIND_FLAGS, {
+				filter: (flag) => flag.name.startsWith('SpawnSquad:')
+			});
+			for (var i in spawnFlags) {
+				var flag = spawnFlags[i];
+				var commandParts = flag.name.split(':');
+				var squadName = commandParts[1];
+
+				if (!Memory.squads[squadName]) var squad = new Squad(squadName);
+				if (Memory.squads[squadName].fullySpawned) continue;
+
+				// @todo Initialize Game.squads in main loop and use that.
+				var squad = new Squad(squadName);
+				if (squad.spawnUnit(spawn)) {
+					return true;
+				}
+			}
+		}
 
 		// Remote harvesting temporarily disabled until CPU is better.
 		if (Game.cpu.bucket < 8000) {
@@ -262,9 +290,7 @@ Room.prototype.manageSpawns = function() {
 			let flag = harvestFlags[i];
 			let isSpecificFlag;
 
-			// @todo: Don't harvest from reserved or claimed rooms
-
-			// Send Harvesters from defined room
+			// Don't harvest from claimed rooms
 			if (flag.name.startsWith('HarvestRemote:')) {
 				let part = flag.name.split(':');
 				if (part[1] && part[1] != spawn.pos.roomName) {
@@ -314,7 +340,7 @@ Room.prototype.manageSpawns = function() {
 
 					if (Game.rooms[flag.pos.roomName]) {
 						let room = Game.rooms[flag.pos.roomName];
-						if (room.controller && (room.controller.my || (room.controller.reservation && room.controller.reservation.username == 'inde'))) {
+						if (room.controller && (room.controller.my || (room.controller.reservation && room.controller.reservation.username == username))) {
 							maxRemoteHaulers = 2;
 						}
 					}
@@ -385,10 +411,14 @@ Room.prototype.manageSpawns = function() {
 StructureSpawn.prototype.spawnRemoteHarvester = function (targetPosition) {
 	var bodyWeights = {move: 0.5, work: 0.2, carry: 0.3};
 	var maxParts = {work: 3};
+	if (this.room.controller.my) {
+		var username = this.room.controller.owner.username;
+	}
+
 	// Use less work parts if room is not reserved yet.
 	if (Game.rooms[targetPosition.roomName]) {
 		let room = Game.rooms[targetPosition.roomName];
-		if (room.controller && (room.controller.my || (room.controller.reservation && room.controller.reservation.username == 'inde'))) {
+		if (room.controller && (room.controller.my || (room.controller.reservation && room.controller.reservation.username == username))) {
 			maxParts.work = 6;
 		}
 	}
@@ -429,7 +459,10 @@ StructureSpawn.prototype.spawnRemoteHarvester = function (targetPosition) {
 /**
  * Spawns a new builder.
  */
-StructureSpawn.prototype.spawnBuilder = function () {
+StructureSpawn.prototype.spawnBuilder = function (force) {
+	if (force && this.room.energyAvailable >= 200) {
+		var maxCost = this.room.energyAvailable;
+	}
 	return this.createManagedCreep({
 		role: 'builder',
 		bodyWeights: {move: 0.35, work: 0.35, carry: 0.3},

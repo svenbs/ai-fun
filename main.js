@@ -2,19 +2,21 @@
 // Screeps profiler stuff
 var profiler = require('screeps-profiler');
 
-require('utilities');
-
+require('pathfinding');
 require('role.harvester');
 require('role.harvester.remote');
 require('role.transporter');
 require('role.upgrader');
 require('role.builder');
 require('role.repairer');
+require('role.brawler');
 
-
+var utillities = require('utilities');
 var spawnManager = require('manager.spawn');
 var intelManager = require('manager.intel');
 var gameState = require('game.state');
+
+var Squad = require('manager.squads');
 
 Room.prototype.enhanceData = function () {
 	this.sources = [];
@@ -75,6 +77,15 @@ Creep.prototype.runLogic = function() {
 			case "repairer":
 				creep.runRepairerLogic();
 				break;
+			case "brawler":
+				try {
+					creep.runBrawlerLogic();
+				}
+				catch (e) {
+					console.log(e);
+				}
+
+				break;
 			default:
 				console.log('Error when managing creep', creep.name, ':');
 				break;
@@ -87,9 +98,9 @@ var main = {
 
 		var hostiles = Game.rooms[roomName].find(FIND_HOSTILE_CREEPS);
 
-	if(hostiles.length > 0) {
+		if(hostiles.length > 0) {
 			var username = hostiles[0].owner.username;
-			Game.notify(`User ${username} spotted in room ${roomName}`);
+			//Game.notify(`User ${username} spotted in room ${roomName}`);
 			var towers = Game.rooms[roomName].find(
 				FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
 			towers.forEach(tower => tower.attack(hostiles[0]));
@@ -184,6 +195,16 @@ module.exports.loop = function () {
 			Game.rooms[roomName].enhanceData();
 		}
 
+		// Make sure Memory structure is available.
+		if (!Memory.squads) {
+			Memory.squads = {};
+		}
+
+		// Add data to global Game object.
+		Game.squads = [];
+		for (var squadName in Memory.squads) {
+			Game.squads.push(new Squad(squadName));
+		}
 
 		// check for memory entries of died creeps by iterating over Memory.creeps
 		for (let name in Memory.creeps) {
@@ -201,7 +222,6 @@ module.exports.loop = function () {
 
 		var initCPUUsage = Game.cpu.getUsed() - time;
 		time = Game.cpu.getUsed();
-
 		spawnManager.manageSpawns();
 
 		var spawnCPUUsage = Game.cpu.getUsed() - time;
@@ -241,6 +261,5 @@ module.exports.loop = function () {
 		for (let roomName in Game.rooms) {
 			main.defendRoom(roomName);
 		}
-
 	});
 };

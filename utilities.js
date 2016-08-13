@@ -330,6 +330,8 @@ Room.prototype.getStorageLocation = function () {
 	return room.memory.storage;
 };
 
+var pathPrecalculated = false;
+
 var utilities = {
 
 	precalculatePaths: function (room, sourceFlag) {
@@ -550,7 +552,6 @@ var utilities = {
 	},
 
 	decodePosition: function (position) {
-		//console.log('pos' + position); // Debug
 		var parts = position.match(/^(.*)@([0-9]*)x([0-9]*)$/);
 
 		if (parts && parts.length > 0) {

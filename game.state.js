@@ -42,10 +42,34 @@ var gameState = {
 		return cache.transporters[roomName];
 	},
 
+	getHostiles: function (roomName) {
+		if (!cache.hostiles[roomName]) {
+			cache.hostiles[roomName] = Game.rooms[roomName].find(FIND_HOSTILE_CREEPS);
+		}
+		return cache.hostiles[roomName];
+	},
+
+	getHostileStructures: function (roomName) {
+		if (!cache.hostileStructures[roomName]) {
+			cache.hostileStructures[roomName] = Game.rooms[roomName].find(FIND_HOSTILE_STRUCTURES);
+		}
+		return cache.hostileStructures[roomName];
+	},
+
+	getFriendlyCreeps: function (roomName) {
+		if (!cache.friendlies[roomName]) {
+			cache.friendlies[roomName] = Game.rooms[roomName].find(FIND_MY_CREEPS);
+		}
+		return cache.friendlies[roomName];
+	},
+
 	clearCache: function() {
 		cache = {
 			harvesters: {},
 			transporters: {},
+			hostiles: {},
+			hostileStructures: {},
+			friendlies: {},
 		};
 	}
 
