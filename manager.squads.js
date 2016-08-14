@@ -13,6 +13,7 @@ var Squad = function(squadName) {
 			},
 			units: {},
 			fullySpawned: false,
+			refreshUnits: false,
 		};
 	}
 
@@ -73,7 +74,7 @@ Squad.prototype.spawnUnit = function (spawn) {
 	if (toSpawn == 'ranger') {
 		return spawn.createManagedCreep({
 			role: 'brawler',
-			bodyWeights: {move: 0.4, tough: 0.1, ranged_attack: 0.25, heal: 0.25},
+			bodyWeights: {move: 0.5, tough: 0.1, ranged_attack: 0.2, heal: 0.2},
 			memory: {
 				squadName: this.name,
 				squadUnitType: toSpawn,
@@ -124,7 +125,33 @@ Squad.prototype.getOrders = function () {
 			options.push({
 				priority: 5,
 				weight: 0,
-				target: utilities.encodePosition(attackFlags[0].pos),
+				target: attackFlags[0],
+			});
+		}
+		var moveFlags = _.filter(Game.flags, (flag) => flag.name.startsWith('MoveSquad:' + this.name));
+		if (moveFlags.length > 0) {
+			options.push({
+				priority: 3,
+				weight: 0,
+				target: moveFlags[0],
+			});
+		}
+		var spawnFlags = _.filter(Game.flags, (flag) => flag.name.startsWith('SpawnSquad:' + this.name));
+		if (spawnFlags.length > 0) {
+			options.push({
+				priority: 2,
+				weight: 0,
+				target: spawnFlags[0],
+			});
+		}
+	}
+	else {
+		var spawnFlags = _.filter(Game.flags, (flag) => flag.name.startsWith('SpawnSquad:' + this.name));
+		if (spawnFlags.length > 0) {
+			options.push({
+				priority: 5,
+				weight: 0,
+				target: spawnFlags[0],
 			});
 		}
 	}

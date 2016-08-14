@@ -558,7 +558,71 @@ var utilities = {
 			return new RoomPosition(parts[2], parts[3], parts[1]);
 		}
 		return null;
-	}
+	},
+
+	decodeDirection: function(creep, direction, reverse) {
+		var directions = [
+			{ key: 'platzhalter', },
+			{ key: TOP,				value: 0, pos: { x: 0, y: -1 },		reversed: BOTTOM,		},
+			{ key: TOP_RIGHT,		value: 0, pos: { x: +1, y: -1 },	reversed: BOTTOM_LEFT,	},
+			{ key: RIGHT,			value: 0, pos: { x: +1, y: 0 },		reversed: LEFT,			},
+			{ key: BOTTOM_RIGHT,	value: 0, pos: { x: +1, y: +1 },	reversed: TOP_LEFT,		},
+			{ key: BOTTOM,			value: 0, pos: { x: 0, y: +1 },		reversed: TOP,			},
+			{ key: BOTTOM_LEFT,		value: 0, pos: { x: -1, y: +1 },	reversed: TOP_RIGHT,	},
+			{ key: LEFT,			value: 0, pos: { x: -1, y: 0 },		reversed: RIGHT,		},
+			{ key: TOP_LEFT,		value: 0, pos: { x: -1, y: -1 },	reversed: BOTTOM_RIGHT,	},
+		];
+
+		var pos = {};
+		if (reverse) {
+			pos.x = creep.pos.x + directions[directions[direction].reversed].pos.x;
+			pos.y = creep.pos.y + directions[directions[direction].reversed].pos.y;
+			pos.roomName = creep.pos.roomName;
+		}
+		else {
+			pos.x = creep.pos.x + directions[direction].pos.x;
+			pos.y = creep.pos.y + directions[direction].pos.y;
+			pos.roomName = creep.pos.roomName;
+		}
+		var position = new RoomPosition(pos.x, pos.y, pos.roomName);
+		return position;
+	},
+
+	checkForObstaclesAtPosition: function(position) {
+		var obstacles = position.look();
+		var result;
+		obstacles.forEach(function (obstacle) {
+			switch (obstacle.type) {
+				case "creep":
+					result = true;
+					break;
+				case "structure":
+					OBSTACLE_OBJECT_TYPES.forEach(function (obstacletype) {
+						if (obstacle.structure.type == obstacletype) {
+							result = true;
+						}
+						else {
+							result = false;
+						}
+					});
+					break;
+				case "terrain":
+					if (obstacle.terrain == 'wall') {
+						result = true;
+					}
+					else {
+						result = false;
+					}
+					break;
+				default:
+					result = false;
+					break;
+			}
+		});
+		console.log(result);
+		return result;
+	},
+
 }
 
 module.exports = utilities;

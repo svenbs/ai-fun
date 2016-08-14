@@ -62,8 +62,27 @@ StructureSpawn.prototype.createManagedCreep = function(options) {
 			memory.role = options.role;
 		}
 	}
+	if (!memory.body) {
+		memory.body = {
+			move: 0,
+			carry: 0,
+			work: 0,
+			attack: 0,
+			ranged_attack: 0,
+			heal: 0,
+			claim: 0,
+			tough: 0,
+			set partSetter (input) {
+				this[input] += 1;
+			},
+		};
+	}
 	if (options.body) {
-		memory.body = options.body;
+		for (let i in options.body) {
+			var part = options.body[i];
+
+			memory.body.partSetter = part;
+		}
 	}
 
 	// Generate creep name.
@@ -216,7 +235,7 @@ Room.prototype.manageSpawns = function() {
 		}
 
 		if (numHarvesters < 1 || (room.energyAvailable < 300 && room.energyCapacityAvailable > 500 && numHarvesters < 3)) {
-			if (spawn.spawnHarvester(true, maxHarvesterSize)) {
+			if (spawn.spawnHarvester(true, maxHarvesterSize, spawnHarvesterTarget)) {
 				return true;
 			}
 		}
@@ -272,7 +291,7 @@ Room.prototype.manageSpawns = function() {
 				var squadName = commandParts[1];
 
 				if (!Memory.squads[squadName]) var squad = new Squad(squadName);
-				if (Memory.squads[squadName].fullySpawned) continue;
+				if (Memory.squads[squadName].fullySpawned && !Memory.squads[squadName].refreshUnits) continue;
 
 				// @todo Initialize Game.squads in main loop and use that.
 				var squad = new Squad(squadName);

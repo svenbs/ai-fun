@@ -38,8 +38,7 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 		if (creep.pos.roomName == targetPosition.roomName) {
 
 			// Find hostiles to attack
-			// @todo: define creep.memory.body.attack
-			if (creep.memory.body.attack) {
+			if (creep.memory.body.attack > 0 || creep.memory.body.ranged_attack > 0) {
 				var hostiles = gameState.getHostiles(creep.pos.roomName);
 
 				if (hostiles && hostiles.length > 0) {
@@ -49,8 +48,8 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 						// Get enemy Parts (@todo: Check if this could cause performance issues)
 						var attackparts = _.filter(hostile.body, (part) => part.type == ATTACK).length;
 						var rangedparts = _.filter(hostile.body, (part) => part.type == RANGED_ATTACK).length;
-						var toughparts = _.filter(hostile.body, (part) => part.type == TOUGH).length;
-						var healparts = _.filter(hostile.body, (part) => part.type == HEAL).length;
+						var toughparts  = _.filter(hostile.body, (part) => part.type == TOUGH).length;
+						var healparts   = _.filter(hostile.body, (part) => part.type == HEAL).length;
 
 						// @todo: Calculate weight / priority from HP left / Maybe Range - may cause my squads to scatter? (creep.pos.getRangeTo(hostile) / 100) +
 						var option = {
@@ -64,7 +63,7 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 					}
 				}
 
-				var structures = _.filter(gameState.getHostileStructures(), (structure) => {
+				var structures = _.filter(gameState.getHostileStructures(creep.pos.roomName), (structure) => {
 					structure.structureType != STRUCTURE_CONTROLLER && structure.structureType != STRUCTURE_STORAGE
 				});
 
@@ -91,8 +90,8 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 				// @todo: Find walls or ramparts in front of controller
 				// @todo: Find Controller
 			}
-			if (creep.memory.body.heal) {
-				var damaged = _.filter(gameState.getFriendlyCreeps(creep.room.roomName), (friendly) => {
+			if (creep.memory.body.heal > 0) {
+				var damaged = _.filter(gameState.getFriendlyCreeps(creep.pos.roomName), (friendly) => {
 					friendly.id != creep.id && 	friendly.hits < friendly.hitsMax
 				});
 
@@ -121,65 +120,11 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 		option.priority -= 1;
 	}
 	options.push(option);*/
-
 	return options;
 };
 
-/**
- * Move Squads
- */
-Creep.prototype.performMilitaryMove = function() {
+Creep.prototype.executeMilitaryMoveOrders = function(squad) {
 	var creep = this;
-
-	if (creep.memory.squadName) {
-		// Check for orders and set target.
-		// @todo: Define Game.squads -> manager.squads
-		var squads = _.filter(Game.squads, (squad) => squad.name == creep.memory.squadName);
-		if (squads && squads.length > 0) {
-			var squad = squads[0];
-
-			var orders = squad.getOrders();
-			if (orders && orders.length > 0) {
-				creep.memory.target = orders[0].target;
-			}
-			else {
-				delete creep.memory.target;
-			}
-		}
-		if (!creep.memory.target) {
-			var spawnFlags = _.filter(Game.flags, (flag) => flag.name.startsWith('SpawnSquad:' + creep.memory.squadName));
-			if (spawnFlags && spawnFlags.length > 0) {
-				var flag = spawnFlags[0];
-				if (creep.pos.roomName == flag.pos.roomName) {
-					// Refresh creeps, so it has high lifetime if mission starts
-					if (creep.ticksToLive < CREEP_LIFE_TIME * 0.66) {
-						creep.memory.renewing = true;
-					}
-					if (creep.memory.renewing) {
-						var spawn = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-							filter: (structure) => structure.structureType == STRUCTURE_SPAWN
-						});
-
-						if (spawn) {
-							if (creep.pos.getRangeTo(spawn) > 1) {
-								creep.moveTo(spawn);
-							}
-							else {
-								var result = spawn.renewCreep(creep);
-								if (spawn.room.energyAvailable < spawn.room.energyCapacityAvailable * 0.3) {
-									delete creep.memory.renewing;
-								}
-							}
-							return true;
-						}
-					}
-
-					creep.moveTo(flag);
-				}
-			}
-			return true;
-		}
-	}
 
 	// Move to room
 	if (creep.memory.target) {
@@ -197,15 +142,16 @@ Creep.prototype.performMilitaryMove = function() {
 		if (target) {
 			var result = creep.moveTo(target, {
 				reusePath: 0,
-				ignoreDestructibleStructures: !creep.room.controller.my && creep.memory.body.attack,
+				ignoreDestructibleStructures: !creep.room.controller.my && creep.memory.body.attack > 0,
 			});
 		}
 	}
 	else {
 		if (creep.memory.squadName) {
-			var attackFlags = _.filter(Game.flags, (flag) => flag.name.startsWith('AttackSquad:' + creep.memory.squadName));
-			if (attackFlags.length > 0) {
-				creep.moveTo(attackFlags[0]);
+			var best = utilities.getBestOption(squad.getOrders());
+
+			if (best && best.target) {
+				creep.moveTo(best.target);
 				return;
 			}
 		}
@@ -214,6 +160,127 @@ Creep.prototype.performMilitaryMove = function() {
 			reusePath: 50,
 		});
 	}
+
+	// Ranged units shall try to keep some distance
+	if (creep.memory.body.ranged_attack > 0) {
+		var target = Game.getObjectById(creep.memory.order.target);
+		var enemies = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 2);
+		if (enemies && enemies.length > 0) {
+
+			// Reversed Directions-Array
+			// @todo: Maybe define this globally - Use variant from utilities
+			var directions = [
+					{ key: BOTTOM,			value: 0, },
+					{ key: BOTTOM_LEFT,		value: 0, },
+					{ key: LEFT,			value: 0, },
+					{ key: TOP_LEFT,		value: 0, },
+					{ key: TOP,				value: 0, },
+					{ key: TOP_RIGHT,		value: 0, },
+					{ key: RIGHT,			value: 0, },
+					{ key: BOTTOM_RIGHT,	value: 0, },
+					];
+			for (let i in enemies) {
+				var enemy = enemies[i];
+				let direction = creep.pos.getDirectionTo(enemy);
+				// Direction start with 1 - for our array we need them to start at 0
+				directions[direction - 1].value += 1;
+			}
+
+			// Flee to best direction.
+			var direction;
+			for (var i = 0; i < directions.length; i++) {
+				var max = 0;
+				if (max < directions[i].value) {
+					direction = directions[i].key;
+					max = directions[i].value;
+				}
+			}
+
+			// This will search another path if current one is blocked by an obstacle
+			var newPosition = utilities.decodeDirection(creep, direction);
+			var blocking = false;
+			// We need 3 iterations to check the two closest squares for blocking obstacles
+			for (var i = 0; i < 3; i++) {
+				if (utilities.checkForObstaclesAtPosition(newPosition)) {
+					blocking = true;
+					// On first iteration search the square counter clockwise
+					if (i == 0) {
+						// subtract 1 from direction and roll over if 0 is reached
+						direction = (direction + (8 - 1)) % 8;
+					}
+					// On second iteration search the square clockwise
+					else if (i == 1) {
+						// add 2 to direction and roll over if 8 is reached
+						// @todo: Find a better way to do this.
+						direction = direction + 2;
+						if (direction == 0) direction = 1;
+					}
+					newPosition = utilities.decodeDirection(creep, direction);
+				}
+				else {
+					blocking = false;
+					break;
+				}
+			}
+			// If no good path is found, move to target - maybe creeps will switch position.
+			if (blocking) {
+				direction = creep.pos.getDirectionTo(target);
+			}
+			if (creep.pos.getRangeTo(target) < 3) {
+				creep.move(direction);
+				return 'escaped';
+			}
+			return false;
+		}
+	}
+};
+
+/**
+ * Move Squads
+ */
+Creep.prototype.performMilitaryMove = function() {
+	var creep = this;
+	if (creep.memory.squadName) {
+		// Check for orders and set target.
+		// @todo: Define Game.squads -> manager.squads
+		var squads = _.filter(Game.squads, (squad) => squad.name == creep.memory.squadName);
+		if (squads && squads.length > 0) {
+			var squad = squads[0];
+
+			var orders = squad.getOrders();
+			if (orders && orders.length > 0) {
+				creep.memory.target = utilities.encodePosition(orders[0].target.pos);
+			}
+			else {
+				delete creep.memory.target;
+			}
+		}
+		if (creep.room.controller.my) {
+			if (creep.ticksToLive < CREEP_LIFE_TIME * 0.66) {
+				creep.memory.renewing = true;
+			}
+			if (creep.memory.renewing) {
+				var spawn = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+					filter: (structure) => structure.structureType == STRUCTURE_SPAWN
+				});
+
+				if (spawn) {
+					if (creep.pos.getRangeTo(spawn) > 1) {
+						creep.moveTo(spawn);
+					}
+					else {
+						var result = spawn.renewCreep(creep);
+						if (spawn.room.energyAvailable < spawn.room.energyCapacityAvailable * 0.3 || result == ERR_FULL) {
+							delete creep.memory.renewing;
+						}
+					}
+					return true;
+				}
+			}
+		}
+	}
+
+	return creep.executeMilitaryMoveOrders(squads[0]);
 };
 
 /**
@@ -226,7 +293,7 @@ Creep.prototype.performMilitaryAttack = function() {
 		var target = Game.getObjectById(creep.memory.order.target);
 		var attacked = false;
 
-		if (target && target instanceof StctureController) {
+		if (target && target instanceof StructureController) {
 			if (target.owner && !target.my) {
 				if (creep.attackController(target) == OK) {
 					attacked = true;
@@ -236,15 +303,26 @@ Creep.prototype.performMilitaryAttack = function() {
 				// @todo: reserve
 			}
 		}
-		else if (target && !target.my) {
-			if (creep.attack(target) == OK) {
-				attacked = true;
+		else if (creep.memory.body.ranged_attack > 0) {
+			if (target && !target.my) {
+				if (creep.pos.getRangeTo(target) <= 3) {
+					if (creep.rangedAttack(target)) {
+						attacked = true;
+					}
+				}
+			}
+		}
+		if (!attacked && creep.memory.body.attack > 0) {
+			if (target && !target.my) {
+				if (creep.attack(target) == OK) {
+					attacked = true;
+				}
 			}
 		}
 
 		if (!attacked) {
 			// Look for enemies nearby and attack them
-			var hostile = creep.pos.findInRange(FIND_HOSTILE_CREEP, 1);
+			var hostile = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 1);
 			if (hostile && hostile.length > 0) {
 				for (let i in hostile) {
 					// Leave creeps alone if not dangerous
@@ -331,7 +409,8 @@ Creep.prototype.performMilitaryHeal = function() {
 Creep.prototype.runBrawlerLogic = function() {
 	this.calculateMilitaryTarget();
 
-	this.performMilitaryMove();
+	var escaped = false;
+	escaped = this.performMilitaryMove();
 
 	if (!this.performMilitaryAttack()) {
 		this.performMilitaryHeal();

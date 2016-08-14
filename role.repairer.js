@@ -122,6 +122,7 @@ Creep.prototype.performRepair = function() {
     }
     if (!target || !target.hits || target.hits >= maxHealth) {
         creep.calculateRepairTarget();
+        return true;
     }
 
     if (creep.pos.getRangeTo(target) > 3) {
@@ -175,7 +176,7 @@ Creep.prototype.runRepairerLogic = function() {
 
     if (this.memory.repairing) {
         if (!this.performRepair()) {
-            this.memory.tempRole == 'upgrader';
+            this.memory.tempRole = 'builder';
         }
     }
     else {
