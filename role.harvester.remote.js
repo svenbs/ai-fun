@@ -93,6 +93,7 @@ Creep.prototype.performRemoteHarvesterDelivery = function() {
 		// Container is full, drop energy
 		if (creep.drop(RESOURCE_ENERGY) == OK) {
 			harvestMemory.revenue += creep.carry.energy;
+			Memory.rooms[utilities.decodePosition(creep.memory.storage).roomName].remoteHarvesting[creep.memory.source].revenue = harvestMemory.revenue;
 			return true;
 		}
 	}
@@ -103,7 +104,8 @@ Creep.prototype.performRemoteHarvesterDelivery = function() {
 	else {
 		if (creep.transfer(target, RESOURCE_ENERGY)){
 			// @todo: Muss wahrscheinlich zurück in den Speicher geschrieben werden?
-			harvestMemory.revenue = creep.carry.energy;
+			harvestMemory.revenue += creep.carry.energy;
+			Memory.rooms[utilities.decodePosition(creep.memory.storage).roomName].remoteHarvesting[creep.memory.source].revenue = harvestMemory.revenue;
 		}
 	}
 

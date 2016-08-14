@@ -311,6 +311,7 @@ Room.prototype.manageSpawns = function() {
 		for (var i in harvestFlags) {
 			let flag = harvestFlags[i];
 			let isSpecificFlag;
+			var maxRemoteHarvesters;
 
 			// Don't harvest from claimed rooms
 			if (flag.name.startsWith('HarvestRemote:')) {
@@ -319,6 +320,12 @@ Room.prototype.manageSpawns = function() {
 					continue;
 				}
 				isSpecificFlag = true;
+			}
+			if (flag.name.startsWith('HarvestRemote:')) {
+				let part = flag.name.split(':');
+				if (part[2]) {
+					maxRemoteHarvesters = part[2];
+				}
 			}
 
 			if (Game.map.getRoomLinearDistance(spawn.pos.roomName, flag.pos.roomName) > 1 && !isSpecificFlag) {
@@ -354,7 +361,6 @@ Room.prototype.manageSpawns = function() {
 				var harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester.remote' && creep.memory.storage == position && creep.memory.source == flagPosition);
 				var haulers = _.filter(Game.creeps, (creep) => creep.memory.role == 'hauler' && creep.memory.storage == position && creep.memory.source == flagPosition);
 
-				var maxRemoteHarvesters = 1;
 				var maxRemoteHaulers = 0;
 				if (memory.revenue > 0 || memory.hasContainer) {
 					// @todo Calculate number of needed haulers.
@@ -379,8 +385,8 @@ Room.prototype.manageSpawns = function() {
 						memory.harvesters.push(creep.id);
 					}
 				}
-				/*if (flag.pos.roomName == 'E49S46')
-				console.log('--', flagPosition, 'harvesters:', memory.harvesters.length, '/', maxRemoteHarvesters);//*/
+				/*if (flag.pos.roomName == 'E49S46')*/
+				//console.log('--', flagPosition, 'harvesters:', memory.harvesters.length, '/', maxRemoteHarvesters);//
 				if (memory.harvesters.length < maxRemoteHarvesters) {
 					doSpawn = true;
 				}

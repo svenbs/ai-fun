@@ -44,20 +44,29 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 				if (hostiles && hostiles.length > 0) {
 					for (let i in hostiles) {
 						var hostile = hostiles[i];
-						if (!hostile.isDangerous()) continue;
-						// Get enemy Parts (@todo: Check if this could cause performance issues)
-						var attackparts = _.filter(hostile.body, (part) => part.type == ATTACK).length;
-						var rangedparts = _.filter(hostile.body, (part) => part.type == RANGED_ATTACK).length;
-						var toughparts  = _.filter(hostile.body, (part) => part.type == TOUGH).length;
-						var healparts   = _.filter(hostile.body, (part) => part.type == HEAL).length;
+						if (!hostile.isDangerous()) {
+							// Get enemy Parts (@todo: Check if this could cause performance issues)
+							var attackparts = _.filter(hostile.body, (part) => part.type == ATTACK).length;
+							var rangedparts = _.filter(hostile.body, (part) => part.type == RANGED_ATTACK).length;
+							var toughparts  = _.filter(hostile.body, (part) => part.type == TOUGH).length;
+							var healparts   = _.filter(hostile.body, (part) => part.type == HEAL).length;
 
-						// @todo: Calculate weight / priority from HP left / Maybe Range - may cause my squads to scatter? (creep.pos.getRangeTo(hostile) / 100) +
-						var option = {
-							priority: 5,
-							weight: 1 - ((((attackparts + rangedparts) / toughparts) + (healparts / 5)) / 100),
-							type: 'hostilecreep',
-							object: hostile,
-						};
+							// @todo: Calculate weight / priority from HP left / Maybe Range - may cause my squads to scatter? (creep.pos.getRangeTo(hostile) / 100) +
+							var option = {
+								priority: 5,
+								weight: 1 - ((((attackparts + rangedparts) / toughparts) + (healparts / 5)) / 100),
+								type: 'hostilecreep',
+								object: hostile,
+							};
+						}
+						else {
+							var option = {
+								priority: 0,
+								weight: 1 - ((((attackparts + rangedparts) / toughparts) + (healparts / 5)) / 100),
+								type: 'hostilecreep',
+								object: hostile,
+							};
+						}
 
 						options.push(option);
 					}
@@ -138,12 +147,21 @@ Creep.prototype.executeMilitaryMoveOrders = function(squad) {
 	// If inside designated room
 	if (creep.memory.order) {
 		var target = Game.getObjectById(creep.memory.order.target);
-
-		if (target) {
-			var result = creep.moveTo(target, {
-				reusePath: 0,
-				ignoreDestructibleStructures: !creep.room.controller.my && creep.memory.body.attack > 0,
-			});
+		if (!creep.room.controller) {
+			if (target) {
+				var result = creep.moveTo(target, {
+					reusePath: 0,
+					ignoreDestructibleStructures: creep.memory.body.attack > 0,
+				});
+			}
+		}
+		else {
+			if (target) {
+				var result = creep.moveTo(target, {
+					reusePath: 0,
+					ignoreDestructibleStructures: !creep.room.controller.my && creep.memory.body.attack > 0,
+				});
+			}
 		}
 	}
 	else {
@@ -255,7 +273,7 @@ Creep.prototype.performMilitaryMove = function() {
 				delete creep.memory.target;
 			}
 		}
-		if (creep.room.controller.my) {
+		if (creep.room.controller && creep.room.controller.my) {
 			if (creep.ticksToLive < CREEP_LIFE_TIME * 0.66) {
 				creep.memory.renewing = true;
 			}

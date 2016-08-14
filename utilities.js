@@ -619,7 +619,6 @@ var utilities = {
 					break;
 			}
 		});
-		console.log(result);
 		return result;
 	},
 
