@@ -14,7 +14,48 @@ var utilities = require('utilities');
 /**
  * Build roads on the way home (TODO)
  */
-Creep.prototype.performBuildRoads = function() {
+Creep.prototype.performBuildRoad = function() {
+	var creep = this;
+	var workParts = creep.memory.body.work;
+	var targetPosition = utilities.decodePosition(creep.memory.storage);
+	var harvestMemory = Memory.rooms[targetPosition.roomName].remoteHarvesting[creep.memory.source];
+
+
+	if (workParts < 1) {
+		return false;
+	}
+
+	//var hasRoad = false;
+	var actionTaken = false;
+
+
+	if (creep.pos.roomName != targetPosition.roomName) {
+		// @todo: Check if on cachedPath and if on road if not create construction site
+		var structures = creep.pos.lookFor(LOOK_STRUCTURES);
+		var constructionSites = creep.pos.lookFor(LOOK_CONSTRUCTION_SITES);
+		for (let i in structures) {
+			var structure = structures[i];
+			if (structure.structureType != STRUCTURE_ROAD && constructionSites.length <= 0) {
+				creep.room.createConstructionSite(creep.pos, STRUCTURE_ROAD);
+			}
+			if (structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax - workParts * 100) {
+				creep.repair(structure);
+				actionTaken = true;
+				// If structure is especially damaged, stay here to repair
+				if (structure.hits < structure.hitsMax - workParts * 2 * 100) {
+					return true;
+				}
+			}
+		}
+		if (constructionSites && constructionSites.length > 0) {
+			creep.build(constructionSites[0]);
+			//harvestMemory.workCost += workParts;
+			Memory.rooms[targetPosition.roomName].remoteHarvesting[creep.memory.source].buildCost += workParts;
+			actionTaken = true;
+			// Stay for building
+			//return true;
+		}
+	}
 };
 
 /**
@@ -24,6 +65,16 @@ Creep.prototype.performRemoteHarvest = function() {
 	var creep = this;
 	var source;
 	var sourcePosition = utilities.decodePosition(creep.memory.source);
+
+	if (this.hasCachedPath()) {
+        if (this.hasArrived() || this.pos.getRangeTo(sourcePosition) < 3) {
+            this.clearCachedPath();
+        }
+        else {
+            this.followCachedPath();
+            return;
+        }
+    }
 
 	// Move creep to source position.
 	if (sourcePosition.roomName != creep.pos.roomName) {
@@ -77,23 +128,32 @@ Creep.prototype.performRemoteHarvest = function() {
 Creep.prototype.performRemoteHarvesterDelivery = function() {
 	var creep = this;
 	var targetPosition = utilities.decodePosition(creep.memory.storage);
-	var harvestMemory = Memory.rooms[utilities.decodePosition(creep.memory.storage).roomName].remoteHarvesting[creep.memory.source];
+	var harvestMemory = Memory.rooms[targetPosition.roomName].remoteHarvesting[creep.memory.source];
+
+	try {
+		if (creep.performBuildRoad()) {
+			return true;
+		}
+	}
+	catch (e) {
+		console.log('Error in performBuildRoad: ' + e);
+	}
 
 	if (targetPosition.roomName != creep.pos.roomName) {
 		creep.moveTo(targetPosition);
 		return true;
 	}
 
-	// @todo: performBuildRoads on the way back
+	// @todo: performBuildRoad on the way back
 
 	// @todo: Use default delivery method if no storage defined
 	var target = creep.room.storage;
 
+	harvestMemory.revenue += creep.carry.energy;
 	if (!target || _.sum(target.store) + creep.carry.energy >= target.storeCapacity) {
 		// Container is full, drop energy
 		if (creep.drop(RESOURCE_ENERGY) == OK) {
-			harvestMemory.revenue += creep.carry.energy;
-			Memory.rooms[utilities.decodePosition(creep.memory.storage).roomName].remoteHarvesting[creep.memory.source].revenue = harvestMemory.revenue;
+			Memory.rooms[targetPosition.roomName].remoteHarvesting[creep.memory.source].revenue = harvestMemory.revenue;
 			return true;
 		}
 	}
@@ -103,9 +163,7 @@ Creep.prototype.performRemoteHarvesterDelivery = function() {
 	}
 	else {
 		if (creep.transfer(target, RESOURCE_ENERGY)){
-			// @todo: Muss wahrscheinlich zurück in den Speicher geschrieben werden?
-			harvestMemory.revenue += creep.carry.energy;
-			Memory.rooms[utilities.decodePosition(creep.memory.storage).roomName].remoteHarvesting[creep.memory.source].revenue = harvestMemory.revenue;
+			 Memory.rooms[targetPosition.roomName].remoteHarvesting[creep.memory.source].revenue = harvestMemory.revenue;
 		}
 	}
 
@@ -118,6 +176,13 @@ Creep.prototype.performRemoteHarvesterDelivery = function() {
 Creep.prototype.setRemoteHarvesterState = function(harvesting) {
 	// Setze den Harvester State (true/false)
 	this.memory.harvesting = harvesting;
+
+	var targetPosition = utilities.decodePosition(this.memory.storage);
+	var harvestMemory = Memory.rooms[targetPosition.roomName].remoteHarvesting[this.memory.source];
+
+	if (harvestMemory.cachedPath) {
+		this.setCachedPath(harvestMemory.cachedPath.path, !harvesting, 1);
+	}
 }
 
 /**
