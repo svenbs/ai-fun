@@ -176,7 +176,7 @@ Creep.prototype.runRepairerLogic = function() {
 
     if (this.memory.repairing) {
         if (!this.performRepair()) {
-            this.memory.tempRole = 'builder';
+            //this.memory.tempRole = 'builder';
         }
     }
     else {

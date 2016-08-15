@@ -40,8 +40,8 @@ Room.prototype.enhanceData = function () {
 			this.bays[flags[i].name] = new Bay(flags[i].name);
 		}
 		catch (e) {
-			console.log('Error when initializing Bays:', e);
-			console.log(e.stack);
+			Game.notify('Error when initializing Bays:', e);
+			Game.notify(e.stack);
 		}
 	}
 };
@@ -63,7 +63,13 @@ Creep.prototype.runLogic = function() {
 				creep.runHarvesterLogic();
 				break;
 			case "harvester.remote":
-				creep.runRemoteHarvesterLogic();
+				try {
+					creep.runRemoteHarvesterLogic();
+				}
+				catch (e) {
+					Game.notify('Error in RemoteHarvesterLogic: ' + e);
+					Game.notify(e.stack);
+				}
 				break;
 			case "transporter":
 				creep.runTransporterLogic();
@@ -82,7 +88,8 @@ Creep.prototype.runLogic = function() {
 					creep.runBrawlerLogic();
 				}
 				catch (e) {
-					console.log(e);
+					Game.notify('Error in Brawler Logic: ' + e);
+					Game.notify(e.stack);
 				}
 
 				break;
@@ -176,13 +183,13 @@ var main = {
 	},
 }
 
-// Enable profiling of all methods in Game object protitypes defined up to now.
+// Enable profiling of all methods in Game object prototypes defined up to now.
 profiler.enable();
 
 module.exports.loop = function () {
 	profiler.wrap(function() {
 		if (Game.time % 10 == 0 && Game.cpu.bucket < 9800) {
-			console.log('Bucket:', Game.cpu.bucket);
+			console.log('Bucket:' + Game.cpu.bucket);
 		}
 
 		var time = Game.cpu.getUsed();

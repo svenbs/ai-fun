@@ -100,7 +100,6 @@ Creep.prototype.followCachedPath = function () {
         if (!target) {
             // We're not in the correct room to move on this path. Kind of sucks, but try to get there using the default pathfinder anyway.
             this.moveTo(path[0]);
-            this.say('Searching');
             return;
         }
         else {
@@ -120,7 +119,6 @@ Creep.prototype.followCachedPath = function () {
             else {
                 // Get closer to the path.
                 this.moveTo(target);
-                this.say('getonit');
                 return;
             }
         }

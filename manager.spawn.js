@@ -303,6 +303,7 @@ Room.prototype.manageSpawns = function() {
 
 		// Remote harvesting temporarily disabled until CPU is better.
 		if (Game.cpu.bucket < 8000) {
+			Game.notify('CPU-Bucket below 8000: ' + Game.cpu.bucket);
 			continue;
 		}
 
@@ -327,6 +328,7 @@ Room.prototype.manageSpawns = function() {
 					maxRemoteHarvesters = part[2];
 				}
 			}
+			stats.initRemoteHarvestMemory(spawn.pos.roomName, utilities.encodePosition(flag.pos));
 
 			if (Game.map.getRoomLinearDistance(spawn.pos.roomName, flag.pos.roomName) > 1 && !isSpecificFlag) {
 				continue;
@@ -348,8 +350,8 @@ Room.prototype.manageSpawns = function() {
 				utilities.precalculatePaths(spawn.room, flag);
 			}
 			catch (e) {
-				console.log('Error in pathfinding:', e);
-				console.log(e.stack);
+				Game.notify('Error in pathfinding:', e);
+				Game.notify(e.stack);
 			}
 
 			if (spawn.room.memory.remoteHarvesting && spawn.room.memory.remoteHarvesting[flagPosition]) {

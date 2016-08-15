@@ -350,7 +350,6 @@ Creep.prototype.perfromDeliver = function() {
 			creep.calculateDeliveryTarget();
 			return true;
 		}
-		//console.log('Transporter: ' + creep.name + target.id); // Debug
 
 		if (creep.pos.getRangeTo(target) > 1) {
 			creep.moveTo(target);
