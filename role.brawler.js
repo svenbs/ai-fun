@@ -38,13 +38,13 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 		if (creep.pos.roomName == targetPosition.roomName) {
 
 			// Find hostiles to attack
-			if (creep.memory.body.attack && creep.memory.body.attack > 0 || creep.memory.body.ranged_attack && creep.memory.body.ranged_attack > 0) {
+			if ((creep.memory.body.attack || creep.memory.body.ranged_attack) && (creep.memory.body.attack > 0 || creep.memory.body.ranged_attack > 0)) {
 				var hostiles = gameState.getHostiles(creep.pos.roomName);
 
 				if (hostiles && hostiles.length > 0) {
 					for (let i in hostiles) {
 						var hostile = hostiles[i];
-						if (!hostile.isDangerous()) {
+						if (hostile.isDangerous()) {
 							// Get enemy Parts (@todo: Check if this could cause performance issues)
 							var attackparts = _.filter(hostile.body, (part) => part.type == ATTACK).length;
 							var rangedparts = _.filter(hostile.body, (part) => part.type == RANGED_ATTACK).length;
@@ -55,6 +55,7 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 							var option = {
 								priority: 5,
 								weight: 1 - ((((attackparts + rangedparts) / toughparts) + (healparts / 5)) / 100),
+								//weight: 0,
 								type: 'hostilecreep',
 								object: hostile,
 							};
@@ -62,7 +63,7 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 						else {
 							var option = {
 								priority: 0,
-								weight: 1 - ((((attackparts + rangedparts) / toughparts) + (healparts / 5)) / 100),
+								weight: 2,
 								type: 'hostilecreep',
 								object: hostile,
 							};
@@ -159,7 +160,7 @@ Creep.prototype.executeMilitaryMoveOrders = function(squad) {
 			if (target) {
 				var result = creep.moveTo(target, {
 					reusePath: 0,
-					ignoreDestructibleStructures: !creep.room.controller.my && creep.memory.body.attack > 0,
+					ignoreDestructibleStructures: !creep.room.controller.my && (creep.memory.body.attack > 0 || creep.memory.body.ranged > 0),
 				});
 			}
 		}
@@ -182,8 +183,8 @@ Creep.prototype.executeMilitaryMoveOrders = function(squad) {
 	// Ranged units shall try to keep some distance
 	if (creep.memory.body.ranged_attack > 0) {
 		var target = Game.getObjectById(creep.memory.order.target);
-		var enemies = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 2);
-		if (enemies && enemies.length > 0) {
+		//var enemies = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 2);
+		//if (enemies && enemies.length > 0) {
 
 			// Reversed Directions-Array
 			// @todo: Maybe define this globally - Use variant from utilities
@@ -197,12 +198,17 @@ Creep.prototype.executeMilitaryMoveOrders = function(squad) {
 					{ key: RIGHT,			value: 0, },
 					{ key: BOTTOM_RIGHT,	value: 0, },
 					];
-			for (let i in enemies) {
+
+			if (creep.pos.getRangeTo(target) < 3) {
+				let direction = creep.pos.getDirectionTo(target);
+				directions[direction -1].value += 1;
+			}
+			/*for (let i in enemies) {
 				var enemy = enemies[i];
 				let direction = creep.pos.getDirectionTo(enemy);
 				// Direction start with 1 - for our array we need them to start at 0
 				directions[direction - 1].value += 1;
-			}
+			}*/
 
 			// Flee to best direction.
 			var direction;
@@ -249,7 +255,7 @@ Creep.prototype.executeMilitaryMoveOrders = function(squad) {
 				return 'escaped';
 			}
 			return false;
-		}
+		//}
 	}
 };
 
