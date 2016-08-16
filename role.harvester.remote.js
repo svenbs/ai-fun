@@ -25,7 +25,6 @@ Creep.prototype.performBuildRoad = function() {
 		return false;
 	}
 
-	//var hasRoad = false;
 	var actionTaken = false;
 
 
@@ -35,10 +34,7 @@ Creep.prototype.performBuildRoad = function() {
 		var constructionSites = creep.pos.lookFor(LOOK_CONSTRUCTION_SITES);
 		for (let i in structures) {
 			var structure = structures[i];
-			if (structure.structureType != STRUCTURE_ROAD && constructionSites.length <= 0) {
-				creep.room.createConstructionSite(creep.pos, STRUCTURE_ROAD);
-			}
-			if (structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax - workParts * 100) {
+			if (!actionTaken && structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax - workParts * 100) {
 				creep.repair(structure);
 				actionTaken = true;
 				// If structure is especially damaged, stay here to repair
@@ -47,9 +43,12 @@ Creep.prototype.performBuildRoad = function() {
 				}
 			}
 		}
-		if (constructionSites && constructionSites.length > 0) {
+		if (structures.length <= 0 && constructionSites.length <= 0) {
+			creep.room.createConstructionSite(creep.pos, STRUCTURE_ROAD);
+			actionTaken = true;
+		}
+		if (!actionTaken && constructionSites && constructionSites.length > 0) {
 			creep.build(constructionSites[0]);
-			//harvestMemory.workCost += workParts;
 			Memory.rooms[targetPosition.roomName].remoteHarvesting[creep.memory.source].buildCost += workParts;
 			actionTaken = true;
 			// Stay for building
@@ -67,14 +66,14 @@ Creep.prototype.performRemoteHarvest = function() {
 	var sourcePosition = utilities.decodePosition(creep.memory.source);
 
 	if (this.hasCachedPath()) {
-        if (this.hasArrived() || this.pos.getRangeTo(sourcePosition) < 3) {
-            this.clearCachedPath();
-        }
-        else {
-            this.followCachedPath();
-            return;
-        }
-    }
+		if (this.hasArrived() || this.pos.getRangeTo(sourcePosition) < 3) {
+			this.clearCachedPath();
+		}
+		else {
+			this.followCachedPath();
+			return;
+		}
+	}
 
 	// Move creep to source position.
 	if (sourcePosition.roomName != creep.pos.roomName) {
@@ -143,8 +142,6 @@ Creep.prototype.performRemoteHarvesterDelivery = function() {
 		creep.moveTo(targetPosition);
 		return true;
 	}
-
-	// @todo: performBuildRoad on the way back
 
 	// @todo: Use default delivery method if no storage defined
 	var target = creep.room.storage;
