@@ -328,7 +328,6 @@ Room.prototype.manageSpawns = function() {
 					maxRemoteHarvesters = part[2];
 				}
 			}
-			stats.initRemoteHarvestMemory(spawn.pos.roomName, utilities.encodePosition(flag.pos));
 
 			if (Game.map.getRoomLinearDistance(spawn.pos.roomName, flag.pos.roomName) > 1 && !isSpecificFlag) {
 				continue;
@@ -477,6 +476,7 @@ StructureSpawn.prototype.spawnRemoteHarvester = function (targetPosition) {
 	if (result) {
 		var cost = 0;
 		for (var part in Memory.creeps[result].body) {
+			if (part == 'partSetter') continue;
 			var count = Memory.creeps[result].body[part];
 			cost += BODYPART_COST[part] * count;
 		}
