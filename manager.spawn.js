@@ -303,8 +303,84 @@ Room.prototype.manageSpawns = function() {
 
 		// Remote harvesting temporarily disabled until CPU is better.
 		if (Game.cpu.bucket < 8000) {
-			Game.notify('CPU-Bucket below 8000: ' + Game.cpu.bucket);
+			Game.notify('CPU-Bucket below 8000: '+Game.cpu.bucket);
 			continue;
+		}
+
+		// If possible claim rooms
+		var numRooms = _.size(_.filter(Game.rooms, (room) => room.controller && room.controller.my));
+		var maxRooms = Game.gcl.level;
+		var claimFlags = _.filter(Game.flags, (flag) => flag.name.startsWith('ClaimRoom'));
+
+		if (claimFlags && /*numRoom < maxRooms &&*/ claimFlags.length > 0) {
+			for (let i in claimFlags) {
+				var flag = claimFlags[i];
+
+				if (Game.rooms[flag.pos.roomName] && Game.rooms[flag.pos.roomName].controller.my) {
+					// Room is already claimed
+					continue;
+				}
+
+				// Make sure only the closest room spawns a claimer!
+				var min = null;
+				for (let j in Game.rooms) {
+					if (Game.rooms[j].controller && Game.rooms[j].controller.my) {
+						if (!min || Game.map.getRoomLinearDistance(Game.rooms[j].name, flag.pos.roomName) < min) {
+							min = Game.map.getRoomLinearDistance(Game.rooms[j].name, flag.pos.roomName);
+						}
+					}
+				}
+				if (Game.map.getRoomLinearDistance(spawn.pos.roomName, flag.pos.roomName) <= min) {
+					var claimers = _.filter(Game.creeps, (creep) => {
+						if (creep.memory.role == 'claimer' && creep.memory.mission == 'claim' && creep.memory.target == utilities.encodePosition(flag.pos)) {
+							return true
+						}
+						return false;
+					});
+
+					if (!claimers || claimers.length < 1) {
+						if (spawn.spawnClaimer(flag.pos, 'claim')) {
+							console.log('sending new claimer to ' + flag.pos.roomName);
+							return true;
+						}
+					}
+				}
+			}
+		}
+		if (claimFlags && claimFlags.length > 0) {
+			// Check for rooms that are marked for claiming and belong to us.
+			for (let i in claimFlags) {
+				var flag = claimFlags[i];
+
+				if (Game.rooms[flag.pos.roomName]  && Game.rooms[flag.pos.roomName].controller.my) {
+					// Make sure only the closest room spawn builders!
+					var min = null;
+					for (let j in Game.rooms) {
+						let hasSpawn = Game.rooms[j].find(FIND_STRUCTURES, { filter: (structure) => structure.structureType == STRUCTURE_SPAWN });
+						if (hasSpawn && hasSpawn.length > 0 && Game.rooms[j].controller && Game.rooms[j].controller.my) {
+							if (!min || Game.map.getRoomLinearDistance(Game.rooms[j].name, flag.pos.roomName) < min) {
+								min = Game.map.getRoomLinearDistance(Game.rooms[j].name, flag.pos.roomName);
+							}
+						}
+					}
+					if (Game.map.getRoomLinearDistance(spawn.pos.roomName, flag.pos.roomName) <= min) {
+						var maxRemoteBuilders = 2;
+						var builders = _.filter(Game.creepsByRole['builder.remote'] || [], (creep) => {
+							if (creep.memory.target == utilities.encodePosition(flag.pos)) {
+								return true;
+							}
+							return false;
+						});
+
+						if (!builders || builders.length < maxRemoteBuilders) {
+							if (spawn.spawnRemoteBuilder(flag.pos)) {
+								console.log('sending new remote builder to', utilities.encodePosition(flag.pos));
+								return true;
+							}
+						}
+					}
+				}
+			}
 		}
 
 		// Remote Harvesting
@@ -500,6 +576,39 @@ StructureSpawn.prototype.spawnBuilder = function (force) {
 		maxParts: {work: 5},
 		memory: {
 			singleRoom: this.pos.roomName,
+		},
+	});
+};
+
+/**
+ * Spawns a new claimer.
+ */
+StructureSpawn.prototype.spawnClaimer = function (targetPosition, mission) {
+	var minSize = BODYPART_COST[CLAIM] * 2 + BODYPART_COST[MOVE] * 3;
+	if (this.room.energyAvailable < minSize) return false;
+
+	return this.createManagedCreep({
+		role: 'claimer',
+		bodyWeights: {move: 0.5, claim: 0.5},
+		maxParts: {claim: 5},
+		memory: {
+			target: utilities.encodePosition(targetPosition),
+			mission: mission,
+		},
+	});
+};
+
+/**
+ * Spawns a new remote builder.
+ */
+StructureSpawn.prototype.spawnRemoteBuilder = function (targetPosition) {
+	return this.createManagedCreep({
+		role: 'builder.remote',
+		bodyWeights: {move: 0.5, carry: 0.3, work: 0.2},
+		//maxParts: {work: 5},
+		memory: {
+			target: utilities.encodePosition(targetPosition),
+			starting: true,
 		},
 	});
 };

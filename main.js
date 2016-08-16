@@ -10,6 +10,8 @@ require('role.upgrader');
 require('role.builder');
 require('role.repairer');
 require('role.brawler');
+require('role.claimer');
+require('role.builder.remote');
 
 var utillities = require('utilities');
 var spawnManager = require('manager.spawn');
@@ -43,6 +45,30 @@ Room.prototype.enhanceData = function () {
 			Game.notify('Error when initializing Bays:', e);
 			Game.notify(e.stack);
 		}
+	}
+
+	// Cache creeps per room and role.
+	// @todo Probably move to Creep.prototype.enhanceData().
+	Game.creepsByRole = {};
+	for (let creepName in Game.creeps) {
+		let creep = Game.creeps[creepName];
+		let role = creep.memory.role;
+
+		if (!Game.creepsByRole[role]) {
+			Game.creepsByRole[role] = {};
+		}
+		Game.creepsByRole[role][creepName] = creep;
+
+		let room = creep.room;
+		if (!room.creeps) {
+			room.creeps = {};
+			room.creepsByRole = {};
+		}
+		room.creeps[creepName] = creep;
+		if (!room.creepsByRole[role]) {
+			room.creepsByRole[role] = {};
+		}
+		room.creepsByRole[role][creepName] = creep;
 	}
 };
 
@@ -80,6 +106,15 @@ Creep.prototype.runLogic = function() {
 			case "builder":
 				creep.runBuilderLogic();
 				break;
+			case "builder.remote":
+				try {
+					creep.runRemoteBuilderLogic();
+				}
+				catch (e) {
+					Game.notify('Error in Remote Builder Logic: ' + e);
+					Game.notify(e.stack);
+				}
+				break;
 			case "repairer":
 				creep.runRepairerLogic();
 				break;
@@ -91,7 +126,15 @@ Creep.prototype.runLogic = function() {
 					Game.notify('Error in Brawler Logic: ' + e);
 					Game.notify(e.stack);
 				}
-
+				break;
+			case "claimer":
+				try {
+					creep.runClaimerLogic();
+				}
+				catch (e) {
+					Game.notify('Error in claimer Logic: ' + e);
+					Game.notify(e.stack);
+				}
 				break;
 			default:
 				console.log('Error when managing creep', creep.name, ':');
@@ -229,7 +272,12 @@ module.exports.loop = function () {
 
 		var initCPUUsage = Game.cpu.getUsed() - time;
 		time = Game.cpu.getUsed();
-		spawnManager.manageSpawns();
+		try {
+			spawnManager.manageSpawns();
+		}
+		catch (e) {
+			console.log('Error in manageSpawns: ', e);
+		}
 
 		var spawnCPUUsage = Game.cpu.getUsed() - time;
 		time = Game.cpu.getUsed();
