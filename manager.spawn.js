@@ -301,12 +301,6 @@ Room.prototype.manageSpawns = function() {
 			}
 		}
 
-		// Remote harvesting temporarily disabled until CPU is better.
-		if (Game.cpu.bucket < 8000) {
-			Game.notify('CPU-Bucket below 8000: '+Game.cpu.bucket);
-			continue;
-		}
-
 		// If possible claim rooms
 		var numRooms = _.size(_.filter(Game.rooms, (room) => room.controller && room.controller.my));
 		var maxRooms = Game.gcl.level;
@@ -381,6 +375,12 @@ Room.prototype.manageSpawns = function() {
 					}
 				}
 			}
+		}
+
+		// Remote harvesting temporarily disabled until CPU is better.
+		if (Game.cpu.bucket < 8000) {
+			Game.notify('CPU-Bucket below 8000: '+Game.cpu.bucket);
+			continue;
 		}
 
 		// Remote Harvesting

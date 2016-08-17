@@ -10,6 +10,7 @@ var Squad = function(squadName) {
 				ranger: 0,
 				healer: 0,
 				claimer: 0,
+				knight: 0,
 			},
 			units: {},
 			fullySpawned: false,
@@ -74,7 +75,8 @@ Squad.prototype.spawnUnit = function (spawn) {
 	if (toSpawn == 'ranger') {
 		return spawn.createManagedCreep({
 			role: 'brawler',
-			bodyWeights: {move: 0.5, tough: 0.1, ranged_attack: 0.2, heal: 0.2},
+			//bodyWeights: {move: 0.5, tough: 0.1, ranged_attack: 0.2, heal: 0.2},
+			bodyWeights: {move: 0.4, tough: 0.1, ranged_attack: 0.4, heal: 0.1},
 			memory: {
 				squadName: this.name,
 				squadUnitType: toSpawn,
@@ -84,7 +86,7 @@ Squad.prototype.spawnUnit = function (spawn) {
 	else if (toSpawn == 'healer') {
 		return spawn.createManagedCreep({
 			role: 'brawler',
-			bodyWeights: {move: 0.5, tough: 0.1, heal: 0.4},
+			bodyWeights: {move: 0.4, tough: 0.1, heal: 0.5},
 			memory: {
 				squadName: this.name,
 				squadUnitType: toSpawn,
@@ -94,7 +96,17 @@ Squad.prototype.spawnUnit = function (spawn) {
 	else if (toSpawn == 'claimer') {
 		return spawn.createManagedCreep({
 			role: 'brawler',
-			bodyWeights: {move: 0.5, tough: 0.2, claim: 0.3},
+			bodyWeights: {move: 0.5, claim: 0.5},
+			memory: {
+				squadName: this.name,
+				squadUnitType: toSpawn,
+			},
+		});
+	}
+	else if (toSpawn == 'knight') {
+		return spawn.createManagedCreep({
+			role: 'brawler',
+			bodyWeights: {move: 0.4, tough: 0.1, attack: 0.5},
 			memory: {
 				squadName: this.name,
 				squadUnitType: toSpawn,
@@ -139,7 +151,7 @@ Squad.prototype.getOrders = function () {
 		var spawnFlags = _.filter(Game.flags, (flag) => flag.name.startsWith('SpawnSquad:' + this.name));
 		if (spawnFlags.length > 0) {
 			options.push({
-				priority: 2,
+				priority: 1,
 				weight: 0,
 				target: spawnFlags[0],
 			});

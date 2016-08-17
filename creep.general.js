@@ -4,7 +4,7 @@ Creep.prototype.isDangerous = function () {
 	for (let j in this.body) {
 		let type = this.body[j].type;
 
-		if (type != MOVE && type != CARRY && type != TOUGH) {
+		if (type != WORK && type != MOVE && type != CARRY && type != TOUGH) {
 			return true;
 		}
 	}

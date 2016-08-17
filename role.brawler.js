@@ -119,6 +119,24 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 						options.push(option);
 					}
 				}
+				var friendlies = _.filter(gameState.getFriendlyCreeps(creep.pos.roomName), (friendly) => {
+					friendly.id != creep.id && creep.memory.body.attack.length >= 0 && creep.memory.body.ranged >= 0
+				});
+				// If no damaged creep is found, stay close to other creeps
+				if (friendlies && friendlies.length > 0) {
+					for (let i in friendlies) {
+						friendly = friendlies[0];
+
+						var option = {
+							priority: 1,
+							weight: 1 - (creep.pos.getRangeTo(friendly) / 100),
+							type: 'friendlycreep',
+							object: friendly,
+						};
+
+						options.push(option);
+					}
+				}
 			}
 			if (creep.memory.body.claim && creep.memory.body.claim >= 5) {
 				// @todo: Attack / Reserve controller
@@ -200,59 +218,95 @@ Creep.prototype.executeMilitaryMoveOrders = function(squad) {
 					];
 
 			if (creep.pos.getRangeTo(target) < 3) {
-				let direction = creep.pos.getDirectionTo(target);
+				var direction = creep.pos.getDirectionTo(target);
 				directions[direction -1].value += 1;
-			}
-			/*for (let i in enemies) {
-				var enemy = enemies[i];
-				let direction = creep.pos.getDirectionTo(enemy);
-				// Direction start with 1 - for our array we need them to start at 0
-				directions[direction - 1].value += 1;
-			}*/
 
-			// Flee to best direction.
-			var direction;
-			for (var i = 0; i < directions.length; i++) {
-				var max = 0;
-				if (max < directions[i].value) {
-					direction = directions[i].key;
-					max = directions[i].value;
+				/*for (let i in enemies) {
+					var enemy = enemies[i];
+					let direction = creep.pos.getDirectionTo(enemy);
+					// Direction start with 1 - for our array we need them to start at 0
+					directions[direction - 1].value += 1;
+				}*/
+
+				// Flee to best direction.
+				//var direction;
+				for (var i = 0; i < directions.length; i++) {
+					var max = 0;
+					if (max < directions[i].value) {
+						direction = directions[i].key;
+						max = directions[i].value;
+					}
+				}
+
+				// This will search another path if current one is blocked by an obstacle
+				var newPosition = utilities.decodeDirection(creep, direction);
+				var blocking = false;
+				// We need 3 iterations to check the two closest squares for blocking obstacles
+				for (var i = 0; i < 3; i++) {
+					if (utilities.checkForObstaclesAtPosition(newPosition)) {
+						blocking = true;
+						// On first iteration search the square counter clockwise
+						if (i == 0) {
+							// subtract 1 from direction and roll over if 0 is reached
+							direction = (direction + (8 - 1)) % 8;
+						}
+						// On second iteration search the square clockwise
+						else if (i == 1) {
+							// add 2 to direction and roll over if 8 is reached
+							// @todo: Find a better way to do this.
+							direction = direction + 2;
+							if (direction == 0) direction = 1;
+						}
+						newPosition = utilities.decodeDirection(creep, direction);
+					}
+					else {
+						blocking = false;
+						break;
+					}
+				}
+				// If no good path is found, move to target - maybe creeps will switch position.
+				if (blocking) {
+					direction = creep.pos.getDirectionTo(target);
+				}
+				if (creep.pos.getRangeTo(target) < 3) {
+					creep.move(direction);
+					return 'escaped';
 				}
 			}
-
-			// This will search another path if current one is blocked by an obstacle
-			var newPosition = utilities.decodeDirection(creep, direction);
-			var blocking = false;
-			// We need 3 iterations to check the two closest squares for blocking obstacles
-			for (var i = 0; i < 3; i++) {
-				if (utilities.checkForObstaclesAtPosition(newPosition)) {
-					blocking = true;
-					// On first iteration search the square counter clockwise
-					if (i == 0) {
-						// subtract 1 from direction and roll over if 0 is reached
-						direction = (direction + (8 - 1)) % 8;
+			else if (creep.pos.getRangeTo(target) > 3) {
+				if (creep.memory.order) {
+					var target = Game.getObjectById(creep.memory.order.target);
+					if (!creep.room.controller) {
+						if (target) {
+							var result = creep.moveTo(target, {
+								reusePath: 0,
+								ignoreDestructibleStructures: creep.memory.body.attack > 0,
+							});
+						}
 					}
-					// On second iteration search the square clockwise
-					else if (i == 1) {
-						// add 2 to direction and roll over if 8 is reached
-						// @todo: Find a better way to do this.
-						direction = direction + 2;
-						if (direction == 0) direction = 1;
+					else {
+						if (target) {
+							var result = creep.moveTo(target, {
+								reusePath: 0,
+								ignoreDestructibleStructures: !creep.room.controller.my && (creep.memory.body.attack > 0 || creep.memory.body.ranged > 0),
+							});
+						}
 					}
-					newPosition = utilities.decodeDirection(creep, direction);
 				}
 				else {
-					blocking = false;
-					break;
+					if (creep.memory.squadName) {
+						var best = utilities.getBestOption(squad.getOrders());
+
+						if (best && best.target) {
+							creep.moveTo(best.target);
+							return;
+						}
+					}
+
+					creep.moveTo(25, 25, {
+						reusePath: 50,
+					});
 				}
-			}
-			// If no good path is found, move to target - maybe creeps will switch position.
-			if (blocking) {
-				direction = creep.pos.getDirectionTo(target);
-			}
-			if (creep.pos.getRangeTo(target) < 3) {
-				creep.move(direction);
-				return 'escaped';
 			}
 			return false;
 		//}
@@ -294,6 +348,10 @@ Creep.prototype.performMilitaryMove = function() {
 					}
 					else {
 						var result = spawn.renewCreep(creep);
+						if (spawn.isSpawning) {
+						    creep.memory.renewing;
+						    return true;
+						}
 						if (spawn.room.energyAvailable < spawn.room.energyCapacityAvailable * 0.3 || result == ERR_FULL) {
 							delete creep.memory.renewing;
 						}
