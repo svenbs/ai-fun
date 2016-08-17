@@ -13,8 +13,35 @@ Creep.prototype.performBuild = function() {
 		if (targets.length <= 0) {
 			return false;
 		}
+		else {
+			var options = [];
+			for (let i in targets) {
+				var constructionSite = targets[i];
+				var option = {};
+				if (this.constructionSite && this.constructionSite.structureType == STRUCTURE_EXTENSION) {
+					option = {
+						priority: 5,
+						weight: 1,
+						type: 'constructionSite',
+						object: target,
+					}
+				}
+				else {
+					option = {
+						priority: 2,
+						weight: 1,
+						type: 'constructionSite',
+						object: target,
+					}
+				}
+				options.push(option);
+			}
+		}
+		var best = utilities.getBestOption(options);
 
-		this.memory.buildTarget = utilities.getClosest(this, targets);
+		if (best) {
+			this.memory.buildTarget = utilities.encodePosition(best);
+		}
 	}
 	var best = this.memory.buildTarget;
 	if (!best) {
