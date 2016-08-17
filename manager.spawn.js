@@ -164,6 +164,7 @@ Room.prototype.manageSpawns = function() {
 			for (var id in room.memory.sources) {
 				if (room.controller.level <= 3) {
 					maxHarvesters += room.memory.sources[id].maxHarvesters;
+					maxTransporters -= 2;
 				}
 				else {
 					maxHarvesters++;
@@ -248,11 +249,6 @@ Room.prototype.manageSpawns = function() {
 				return true;
 			}
 		}
-		else if (builders.length < maxBuilders || (room.energyAvailable < 300 && room.energyCapacityAvailable > 500 && builders.length < maxBuilders)) {
-			if (spawn.spawnBuilder(true)) {
-				return true;
-			}
-		}
 		else if (spawnHarvester && numHarvesters < maxHarvesters) {
 			if (spawn.spawnHarvester(false, maxHarvesterSize, spawnHarvesterTarget)) {
 				return true;
@@ -284,6 +280,7 @@ Room.prototype.manageSpawns = function() {
 				// @todo Determine total decay in room and how many worker parts that would need.
 				if (spawn.spawnRepairer()) return true;
 			}
+			// Or if structures are starting to decay
 			else {
 				var structures = spawn.room.find(FIND_STRUCTURES, {
 					filter: (structure) => structure.hits < structure.hitsMax * 0.5
