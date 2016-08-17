@@ -104,7 +104,13 @@ Creep.prototype.runLogic = function() {
 				creep.runUpgraderLogic();
 				break;
 			case "builder":
-				creep.runBuilderLogic();
+				try {
+					creep.runBuilderLogic();
+				}
+				catch (e) {
+					Game.notify('Error in Builder Logic: ' +e);
+					Game.notify(e.stack);
+				}
 				break;
 			case "builder.remote":
 				try {
@@ -224,6 +230,43 @@ var main = {
 			}
 		}
 	},
+
+	/**
+     * Records when hostiles were last seen in a room.
+     */
+    checkRoomSecurity: function () {
+        for (var roomName in Game.rooms) {
+            var room = Game.rooms[roomName];
+
+            var hostiles = room.find(FIND_HOSTILE_CREEPS);
+            var parts = {};
+            var lastSeen = room.memory.enemies && room.memory.enemies.lastSeen || 0;
+            var safe = true;
+
+            if (hostiles.length > 0) {
+                // Count body parts for strength estimation.
+                for (var j in hostiles) {
+                    if (hostiles[j].isDangerous()) {
+                        safe = false;
+                        lastSeen = Game.time;
+                    }
+                    for (var k in hostiles[j].body) {
+                        let type = hostiles[j].body[k].type;
+                        if (!parts[type]) {
+                            parts[type] = 0;
+                        }
+                        parts[type]++;
+                    }
+                }
+            }
+
+            room.memory.enemies = {
+                parts: parts,
+                lastSeen: lastSeen,
+                safe: safe,
+            };
+        }
+    },
 }
 
 // Enable profiling of all methods in Game object prototypes defined up to now.

@@ -13,6 +13,43 @@ Creep.prototype.performBuild = function() {
 		if (targets.length <= 0) {
 			return false;
 		}
+		else {
+			var options = [];
+			for (let i in targets) {
+					var constructionSite = targets[i];
+					var option = {};
+					if (constructionSite && constructionSite.structureType == STRUCTURE_EXTENSION) {
+						option = {
+								priority: 4,
+								weight: 1 - ((constructionSite.progressTotal / constructionSite.progress) - (this.pos.getRangeTo(constructionSite))) / 100,
+								type: 'constructionSite',
+								object: target,
+						}
+					}
+					else if (constructionSite && constructionSite.structureType == STRUCTURE_CONTAINER) {
+						option = {
+								priority: 5,
+								weight: 1 - ((constructionSite.progressTotal / constructionSite.progress) - (this.pos.getRangeTo(constructionSite))) / 100,
+								type: 'constructionSite',
+								object: target,
+						}
+					}
+					else {
+							option = {
+									priority: 2,
+									weight: 1 - (this.pos.getRangeTo(constructionSite) / 100),
+									type: 'constructionSite',
+									object: target,
+							}
+					}
+					options.push(option);
+			}
+	}
+	var best = utilities.getBestOption(options);
+
+	if (best) {
+		this.memory.buildTarget = utilities.encodePosition(best);
+	}
 
 		this.memory.buildTarget = utilities.getClosest(this, targets);
 	}
@@ -59,7 +96,17 @@ Creep.prototype.runBuilderLogic = function() {
 	}
 	else {
 		if (!this.performGetEnergy()) {
-			this.memory.tempRole = 'harvester';
+			var source = this.pos.findClosestByRange(FIND_SOURCES);
+			if (this.pos.getRangeTo(source) > 1) {
+				if (this.moveTo(source) == ERR_NO_PATH && _.sum(creep.carry.energy) > 0) {
+					this.setBuilderState(true);
+				}
+			}
+			else {
+				if (this.harvest(source) != OK && creep.carry.energy > 0) {
+					this.setBuilderState(true);
+				}
+			}
 		}
 	}
 }

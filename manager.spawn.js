@@ -201,7 +201,7 @@ Room.prototype.manageSpawns = function() {
 
 		var maxUpgraders = 0;
 		if (room.controller.level <= 3) {
-			maxUpgraders = 1 + numSources;
+			maxUpgraders = 1 + Math.floor(gameState.getStoredEnergy(room) / 100 / 2.5);
 		}
 		else {
 			if (gameState.getStoredEnergy(room) < 100000) {
@@ -232,6 +232,10 @@ Room.prototype.manageSpawns = function() {
 
 		if (constructionSites) {
 			maxBuilders = Math.min(1 + numSources, Math.ceil(constructionSites.length / 5));
+			// With controller level below 3 and no extensions build Spawn only 2 Builders.
+			if (room.controller.level < 3 && room.energyCapacityAvailable <= 300) {
+				maxBuilders = 2;
+			}
 		}
 
 		if (numHarvesters < 1 || (room.energyAvailable < 300 && room.energyCapacityAvailable > 500 && numHarvesters < 3)) {
@@ -274,10 +278,20 @@ Room.prototype.manageSpawns = function() {
 				return true;
 			}
 		}
+		// Spawn repairers only in Rooms above level 2
 		else if (repairers.length < 2) {
-			// @todo Determine total decay in room and how many worker parts that would need.
-			if (spawn.spawnRepairer()) {
-				return true;
+			if (spawn.room.controller.level > 2) {
+				// @todo Determine total decay in room and how many worker parts that would need.
+				if (spawn.spawnRepairer()) return true;
+			}
+			else {
+				var structures = spawn.room.find(FIND_STRUCTURES, {
+					filter: (structure) => structure.hits < structure.hitsMax * 0.5
+				});
+
+				if (structures && structures.length > 0) {
+					if (spawn.spawnRepairer()) return true;
+				}
 			}
 		}
 		else {
@@ -410,7 +424,44 @@ Room.prototype.manageSpawns = function() {
 				continue;
 			}
 
-			// @todo: Send bruiser to clean up unsafe rooms
+			// Send bruiser to clean up unsafe rooms
+			var roomMemory = Memory.rooms[flag.pos.roomName];
+			if (roomMemory && roomMemory.enemies && !roomMemory.enemies.safe) {
+				var position = spawn.pos;
+				if (spawn.room.storage) {
+					position = spawn.room.storage.pos;
+				}
+
+				// Since we just want a brawler in the room - not one per remoteharvest source - generalize target position.
+				var brawlPosition = new RoomPosition(25, 25, flag.pos.roomName);
+
+				var maxBrawlers = 1;
+				var brawlers = _.filter(Game.creepsByRole.brawler || [], (creep) => {
+					if (creep.memory.storage == utilities.encodePosition(position) && creep.memory.target == utilities.encodePosition(brawlPosition)) {
+						return true;
+					}
+					return false;
+				});
+
+				if (!brawlers || brawlers.length < maxBrawlers) {
+					let result = spawn.spawnBrawler(brawlPosition, 4);
+					if (result) {
+
+						if (result) {
+							let position = utilities.encodePosition(flag.pos);
+							console.log('Spawning new brawler to defend', position, ':', result);
+
+							let cost = 0;
+							for (let partType in Memory.creeps[result].body) {
+								cost += BODYPART_COST[partType] * Memory.creeps[result].body[partType];
+							}
+							stats.addRemoteHarvestDefenseCost(spawn.room.name, position, cost);
+						}
+					}
+					// Do not continue trying to spawn other creeps when defense is needed.
+					return true;
+				}
+			}
 
 			// it's safe to harvest
 			var doSpawn = true;
@@ -490,6 +541,80 @@ Room.prototype.manageSpawns = function() {
 			if (doSpawn) {
 				if (spawn.spawnRemoteHarvester(flag.pos)) {
 					spawn.room.memory.remoteHarvesting[flagPosition] = memory;
+					return true;
+				}
+			}
+		}
+
+		// No harvester spawned? How about some claimers?
+		var reserveFlags = _.filter(Game.flags, (flag) => flag.name.startsWith('ReserveRoom'));
+		for (var i in reserveFlags) {
+			var flag = reserveFlags[i];
+			let isSpecificFlag = false;
+
+			// Make sure not to harvest from wrong rooms.
+			if (flag.name.startsWith('ReserveRoom:')) {
+				let parts = flag.name.split(':');
+				if (parts[1] && parts[1] != spawn.pos.roomName) {
+					continue;
+				}
+				isSpecificFlag = true;
+			}
+
+			if (Game.map.getRoomLinearDistance(spawn.pos.roomName, flag.pos.roomName) > 1 && !isSpecificFlag) {
+				continue;
+			}
+
+			let doSpawn = false;
+
+			var claimerIds = [];
+			var claimers = _.filter(Game.creepsByRole.claimer || [], (creep) => creep.memory.mission == 'reserve');
+			var maxClaimers = 1;
+
+			for (var j in claimers) {
+				var creep = claimers[j];
+
+				if (creep.memory.target == utilities.encodePosition(flag.pos)) {
+					claimerIds.push(creep.id);
+				}
+			}
+			if (claimerIds.length < maxClaimers) {
+				doSpawn = true;
+			}
+			if (Memory.rooms[flag.pos.roomName]
+				&& Memory.rooms[flag.pos.roomName].lastClaim
+				&& Memory.rooms[flag.pos.roomName].lastClaim.value + (Memory.rooms[flag.pos.roomName].lastClaim.time - Game.time) > CONTROLLER_RESERVE_MAX * 0.5
+			) {
+				doSpawn = false;
+			}
+
+			if (doSpawn) {
+				let result = spawn.spawnClaimer(flag.pos, 'reserve');
+				if (result) {
+					// Add cost to a random harvest flag in the room.
+					let harvestFlags = _.filter(Game.flags, (flag2) => {
+						if (flag2.name.startsWith('HarvestRemote') && flag2.pos.roomName == flag.pos.roomName) {
+							// Make sure not to harvest from wrong rooms.
+							if (flag2.name.startsWith('HarvestRemote:')) {
+								let parts = flag2.name.split(':');
+								if (parts[1] && parts[1] != spawn.pos.roomName) {
+									return false;
+								}
+							}
+							return true;
+						}
+						return false;
+					});
+
+					if (harvestFlags.length > 0) {
+						let cost = 0;
+						for (let part in Memory.creeps[result].body) {
+							let count = Memory.creeps[result].body[part];
+							cost += BODYPART_COST[part] * count;
+						}
+
+						stats.addRemoteHarvestCost(spawn.room.name, utilities.encodePosition(_.sample(harvestFlags).pos), cost);
+					}
 					return true;
 				}
 			}
@@ -576,6 +701,28 @@ StructureSpawn.prototype.spawnBuilder = function (force) {
 		maxParts: {work: 5},
 		memory: {
 			singleRoom: this.pos.roomName,
+		},
+	});
+};
+
+StructureSpawn.prototype.spawnBrawler = function (targetPosition, maxAttackParts) {
+	var maxParts = null;
+	if (maxAttackParts) {
+		maxParts = {attack: maxAttackParts};
+	}
+
+	var position = this.pos;
+	if (this.room.storage) {
+		position = this.room.storage.pos;
+	}
+
+	return this.createManagedCreep({
+		role: 'brawler',
+		bodyWeights: {move: 0.4, tough: 0.1, attack: 0.4, heal: 0.1},
+		maxParts: maxParts,
+		memory: {
+			storage: utilities.encodePosition(position),
+			target: utilities.encodePosition(targetPosition),
 		},
 	});
 };
