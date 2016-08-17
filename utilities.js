@@ -58,7 +58,7 @@ Room.prototype.scan = function() {
 
 		// Calculate free adjacent squares for maxHarvesters.
 		var free = 0;
-		var terrain = room.lookForAtArea(LOOK_TERRAIN, source.pos.y - 2, source.pos.x - 2, source.pos.y + 2, source.pos.x + 2, true);
+		var terrain = room.lookForAtArea(LOOK_TERRAIN, source.pos.y - 1, source.pos.x - 1, source.pos.y + 1, source.pos.x + 1, true);
 		var adjacentTerrain = [];
 		for (var t in terrain) {
 			var tile = terrain[t];
