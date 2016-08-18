@@ -175,9 +175,10 @@ Creep.prototype.getAvailableDeliveryTargets = function () {
 		});
 
 		for (let i in targets) {
-			let target = targets[i];
+			let target =  targets[i];
 			let option = {
-				priority: 5,
+				priority: target.structureType == STRUCTURE_EXTENSION ? 6 : 5,
+				// creep.memory.role == 'transporter' ? 0 : 5,
 				// @todo Factor in Range
 				weight: (target.energyCapacity - target.energy) / 100,
 				type: 'structure',

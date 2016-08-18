@@ -149,7 +149,13 @@ Creep.prototype.performRemoteHarvesterDelivery = function() {
 	harvestMemory.revenue += creep.carry.energy;
 	if (!target || _.sum(target.store) + creep.carry.energy >= target.storeCapacity) {
 		// Container is full, drop energy
-		if (creep.drop(RESOURCE_ENERGY) == OK) {
+		var containers = creep.pos.findInRange(STRUCTURE_CONTAINER,3, {
+		    filter: (container) => _.sum(container.store) < container.storeCapacity + _.sum(creep.carry.energy)
+		});
+		if (containers && containers.length > 0) {
+		     target = container[0];
+		}
+		else if (creep.drop(RESOURCE_ENERGY) == OK) {
 			Memory.rooms[targetPosition.roomName].remoteHarvesting[creep.memory.source].revenue = harvestMemory.revenue;
 			return true;
 		}

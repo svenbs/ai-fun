@@ -20,7 +20,7 @@ Creep.prototype.performBuild = function() {
 				var option = {};
 				if (constructionSite && constructionSite.structureType == STRUCTURE_EXTENSION) {
 					option = {
-							priority: 4,
+							priority: 5,
 							weight: 1 - ((constructionSite.progressTotal / constructionSite.progress) - (this.pos.getRangeTo(constructionSite))) / 100,
 							type: 'constructionsite',
 							object: constructionSite,
@@ -28,7 +28,7 @@ Creep.prototype.performBuild = function() {
 				}
 				else if (constructionSite && constructionSite.structureType == STRUCTURE_CONTAINER) {
 					option = {
-							priority: 5,
+							priority: 4,
 							weight: 1 - ((constructionSite.progressTotal / constructionSite.progress) - (this.pos.getRangeTo(constructionSite))) / 100,
 							type: 'constructionsite',
 							object: constructionSite,
@@ -76,6 +76,7 @@ Creep.prototype.setBuilderState = function(building) {
 	this.memory.building = building;
 	delete this.memory.buildTarget;
 	delete this.memory.resourceTarget;
+	delete this.memory.sourceTarget;
 	delete this.memory.tempRole;
 }
 

@@ -83,6 +83,17 @@ Creep.prototype.performHarvesterDelivery = function() {
 			});
 			// Drop energy if no suitable target is found - someone will pick it up
 			if (targets.length <= 0) {
+				if (creep.memory.fixedDropoffSpot) {
+					var dropoffSpot = creep.memory.fixedDropoffSpot;
+					if (creep.pos.getRangeTo(dropoffSpot.x, dropoffSpot.y) <= 0) {
+						creep.drop(RESOURCE_ENERGY);
+						return true;
+					}
+					else {
+						creep.moveTo(dropoffSpot.x, dropoffSpot.y);
+						return true;
+					}
+				}
 				creep.drop(RESOURCE_ENERGY);
 				creep.memory.deliverTarget = null;
 				return true;
