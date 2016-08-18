@@ -48,7 +48,7 @@ Creep.prototype.performBuild = function() {
 		var best = utilities.getBestOption(options);
 
 		if (best) {
-			this.memory.buildTarget = best.id;
+			this.memory.buildTarget = best.object.id;
 		}
 		else {
 			this.memory.buildTarget = utilities.getClosest(this, targets);
