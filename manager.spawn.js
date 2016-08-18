@@ -164,7 +164,9 @@ Room.prototype.manageSpawns = function() {
 			for (var id in room.memory.sources) {
 				if (room.controller.level <= 3) {
 					maxHarvesters += room.memory.sources[id].maxHarvesters;
-					maxTransporters -= 2;
+					if (room.energyCapacityAvailable <= 300) {
+						maxTransporters--;
+					}
 				}
 				else {
 					maxHarvesters++;
@@ -202,7 +204,7 @@ Room.prototype.manageSpawns = function() {
 
 		var maxUpgraders = 0;
 		if (room.controller.level <= 3) {
-			maxUpgraders = 1 + Math.floor(gameState.getStoredEnergy(room) / 100 / 2.5);
+			maxUpgraders = 1 + Math.floor(room.energyCapacityAvailable / 100 / 2.5);
 		}
 		else {
 			if (gameState.getStoredEnergy(room) < 100000) {
@@ -235,7 +237,7 @@ Room.prototype.manageSpawns = function() {
 			maxBuilders = Math.min(1 + numSources, Math.ceil(constructionSites.length / 5));
 			// With controller level below 3 and no extensions build Spawn only 2 Builders.
 			if (room.controller.level < 3 && room.energyCapacityAvailable <= 300) {
-				maxBuilders = 2;
+				maxBuilders = 3;
 			}
 		}
 

@@ -92,7 +92,7 @@ Creep.prototype.runBuilderLogic = function() {
 
 	if (this.memory.building) {
 		if (!this.performBuild()) {
-			this.memory.tempRole = 'upgrader';
+			//this.memory.tempRole = 'upgrader';
 		}
 	}
 	else {
