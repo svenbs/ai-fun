@@ -207,13 +207,13 @@ Room.prototype.manageSpawns = function() {
 
 		var maxUpgraders = 0;
 		if (room.controller.level <= 3) {
-			maxUpgraders = 1 + numSources + Math.floor(gameState.getStoredEnergy(this) / 2000);
+			maxUpgraders = 1 + numSources + Math.floor(gameState.getStoredEnergyAll(room) / 2000);
 		}
 		else {
-			if (gameState.getStoredEnergy(room) < 100000) {
+			if (gameState.getStoredEnergyAll(room) < 100000) {
 				maxUpgraders = 0;
 			}
-			else if (gameState.getStoredEnergy(room) < 500000) {
+			else if (gameState.getStoredEnergyAll(room) < 500000) {
 				maxUpgraders = 1;
 			}
 			else {
