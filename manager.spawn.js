@@ -190,7 +190,7 @@ Room.prototype.manageSpawns = function() {
 					spawnHarvesterTarget = id;
 				}
 				//console.log('maxWorkParts: ' + room.memory.sources[id].maxWorkParts); // Debug
-				
+
 
 				// If we have a link to beam energy around, we'll need less transporters.
 				if (room.memory.sources[id].targetLink && room.memory.controllerLink) {
@@ -207,7 +207,7 @@ Room.prototype.manageSpawns = function() {
 
 		var maxUpgraders = 0;
 		if (room.controller.level <= 3) {
-			maxUpgraders = 1 + Math.floor(room.energyCapacityAvailable / 100 / 2.5);
+			maxUpgraders = 1 + numSources + Math.floor(gameState.getStoredEnergy(this) / 2000);
 		}
 		else {
 			if (gameState.getStoredEnergy(room) < 100000) {
@@ -245,7 +245,7 @@ Room.prototype.manageSpawns = function() {
 				maxBuilderLevel = 3;
 			}*/
 			maxBuilders = Math.min(1 + numSources, Math.ceil(constructionSites.length / 5));
-			
+
 			if (maxBuilderLevel > 0) {
 			    maxBuilders = Math.min(maxBuilders, maxBuilderLevel);
 			    console.log('Max Builders' + maxBuilders + ' maxBuilderLevel ' + maxBuilderLevel); // Debug
