@@ -189,7 +189,6 @@ Room.prototype.manageSpawns = function() {
 					spawnHarvester = true;
 					spawnHarvesterTarget = id;
 				}
-				//console.log('maxWorkParts: ' + room.memory.sources[id].maxWorkParts); // Debug
 
 
 				// If we have a link to beam energy around, we'll need less transporters.
@@ -198,7 +197,6 @@ Room.prototype.manageSpawns = function() {
 				}
 			}
 		}
-		//console.log('max Harvesters: ' + maxHarvesters + ' totalWork: ' + totalWork + ' Spawn Harvesters: ' + spawnHarvester ); // Debug
 
 		// Need less transporters if energy gets beamed around the place a lot.
 		if (room.memory.controllerLink && room.memory.storageLink) {
@@ -236,22 +234,20 @@ Room.prototype.manageSpawns = function() {
 				filter: (structure) => structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE
 			});
 
-        // Only spawn builders befitting the room level and room energy
+		// Only spawn builders befitting the room level and room energy
 		if (constructionSites && constructionSites.length > 0) {
 			// With controller level below 3 and no extensions build Spawn only 2 Builders.
 			var maxBuilderLevel = 0;
 			/*if (room.controller.level < 3 && room.energyCapacityAvailable < 300) {
-			    console.log('MaxBuilders Set'); // Debug
+				console.log('MaxBuilders Set'); // Debug
 				maxBuilderLevel = 3;
 			}*/
 			maxBuilders = Math.min(1 + numSources, Math.ceil(constructionSites.length / 5));
 
 			if (maxBuilderLevel > 0) {
-			    maxBuilders = Math.min(maxBuilders, maxBuilderLevel);
-			    console.log('Max Builders' + maxBuilders + ' maxBuilderLevel ' + maxBuilderLevel); // Debug
+				maxBuilders = Math.min(maxBuilders, maxBuilderLevel);
 			}
 		}
-		//console.log('maxBuilders: ' + maxBuilders); // Debug
 
 		if (numHarvesters < 1 || (room.energyAvailable < 300 && room.energyCapacityAvailable > 500 && numHarvesters < 3)) {
 			if (spawn.spawnHarvester(true, maxHarvesterSize, spawnHarvesterTarget)) {
