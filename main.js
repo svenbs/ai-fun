@@ -13,7 +13,7 @@ require('role.brawler');
 require('role.claimer');
 require('role.builder.remote');
 
-var utillities = require('utilities');
+var utilities = require('utilities');
 var spawnManager = require('manager.spawn');
 var intelManager = require('manager.intel');
 var gameState = require('game.state');
@@ -76,6 +76,14 @@ Room.prototype.enhanceData = function () {
 Creep.prototype.runLogic = function() {
 	var creep = this;
 	let role;
+
+	// Keep creep in room
+	if (creep.memory.singleRoom && creep.pos.roomName != creep.memory.singleRoom) {
+		// @todo Keep in room.
+		var target = creep.memory.singleRoom + "@25x25";
+		var targetPosition = utilities.decodePosition(target);
+		creep.moveTo(targetPosition);
+	}
 
 	if (creep.memory.tempRole) {
 		role = creep.memory.tempRole;
