@@ -249,7 +249,7 @@ Room.prototype.manageSpawns = function() {
 			}
 		}
 
-		if (numHarvesters < 1 || (room.energyAvailable < 300 && room.energyCapacityAvailable > 500 && numHarvesters < 3)) {
+		if (numHarvesters < 1 || (room.energyAvailable < 300 && room.energyCapacityAvailable > 500 && numHarvesters < 1)) {
 			if (spawn.spawnHarvester(true, maxHarvesterSize, spawnHarvesterTarget)) {
 				return true;
 			}

@@ -14,6 +14,8 @@ Creep.prototype.performHarvest = function() {
 		source = Game.getObjectById(creep.memory.fixedMineralSource);
 	}
 	else {
+		// This should only trigger if harvesterscount gets below 1,
+		// and a free harvester is spawned
 		if (!creep.memory.resourceTarget) {
 			// Room has no resources.
 			// @todo: creep.room.sources define this object
@@ -21,10 +23,14 @@ Creep.prototype.performHarvest = function() {
 			  return false;
 			}
 
-			// @todo: creep.room.sources define this object
-			creep.memory.resourceTarget = creep.room.sources[Math.floor(Math.random() * creep.room.sources.length)].id;
-			//var sources = creep.room.find(FIND_SOURCES);
-			//creep.memory.resourceTarget = sources[Math.floor(Math.random() * sources.length)].id;
+			// Find closest source
+			let source = creep.pos.findClosestByPath(FIND_SOURCES, {
+				filter: (source) => source.energy > 0
+			});
+			if (!source || source.length < 1) {
+				return false;
+			}
+			creep.memory.resourceTarget = source.id;
 		}
 		var best = creep.memory.resourceTarget;
 		if (!best) {

@@ -17,39 +17,54 @@ Creep.prototype.performBuild = function() {
 		else {
 			for (let i in targets) {
 				var constructionSite = targets[i];
-				var option = {};
+
+				// Defaults
+				var option = {
+					priority: 2,
+					weight: 1 - ((constructionSite.progressTotal / constructionSite.progress) - (this.pos.getRangeTo(constructionSite))) / 100,
+					type: 'constructionsite',
+					object: constructionSite,
+				};
+				if (constructionsite) {
+					switch (constructionsite.structureType) {
+						case STRUCTURE_EXTENSION:
+							option.priority = 5;
+						break;
+						case STRUCTURE_TOWER:
+							option.priority = 4;
+						break;
+						case STRUCTURE_CONTAINER:
+							option.priority = 3;
+						break;
+						case STRUCTURE_ROAD:
+							option.priority = 1;
+						break;
+						default:
+							option.priority = 2;
+					}
+				}
+				/*
 				if (constructionSite && constructionSite.structureType == STRUCTURE_EXTENSION) {
 					option = {
 							priority: 5,
-							weight: 1 - ((constructionSite.progressTotal / constructionSite.progress) - (this.pos.getRangeTo(constructionSite))) / 100,
-							type: 'constructionsite',
-							object: constructionSite,
 					}
 				}
 				else if (constructionSite && constructionSite.structureType == STRUCTURE_TOWER) {
 					option = {
 							priority: 4,
-							weight: 1 - ((constructionSite.progressTotal / constructionSite.progress) - (this.pos.getRangeTo(constructionSite))) / 100,
-							type: 'constructionsite',
-							object: constructionSite,
 					}
 				}
 				else if (constructionSite && constructionSite.structureType == STRUCTURE_CONTAINER) {
 					option = {
 							priority: 3,
-							weight: 1 - ((constructionSite.progressTotal / constructionSite.progress) - (this.pos.getRangeTo(constructionSite))) / 100,
-							type: 'constructionsite',
-							object: constructionSite,
 					}
 				}
+				else if (constructionsite && constructionsite.)
 				else {
 					option = {
 							priority: 2,
-							weight: 1 - (this.pos.getRangeTo(constructionSite) / 100),
-							type: 'constructionsite',
-							object: constructionSite,
 					}
-				}
+				}*/
 				options.push(option);
 			}
 		}

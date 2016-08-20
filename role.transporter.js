@@ -73,6 +73,12 @@ Creep.prototype.getAvailableEnergySources = function () {
 
 	for (var i in targets) {
 		var target = targets[i];
+
+		// Don't use the controller container as a normal source.
+		if (target.id == target.room.memory.controllerContainer) {
+			continue;
+		}
+
 		var option = {
 			priority: creep.memory.role == 'transporter' ? 0 : 3,
 			weight: target.store[RESOURCE_ENERGY] / 100,

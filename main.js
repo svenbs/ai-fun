@@ -19,6 +19,7 @@ var intelManager = require('manager.intel');
 var gameState = require('game.state');
 
 var Squad = require('manager.squads');
+var structureManager = require('manager.structures');
 
 Room.prototype.enhanceData = function () {
 	this.sources = [];
@@ -184,10 +185,14 @@ var main = {
 	},
 
 	/**
-	 * Manage Structure (TODO)
+	 * Manage Structure
 	 */
 	manageStructures: function() {
-		//@TODO
+		for (let roomName in Game.rooms) {
+			var room = Game.rooms[roomName];
+
+			structureManager.buildRoom(room);
+		}
 	},
 
 	/**
@@ -334,7 +339,7 @@ module.exports.loop = function () {
 		time = Game.cpu.getUsed();
 
 		// @todo
-		//main.manageStructures();
+		main.manageStructures();
 
 		var linksCPUUsage = Game.cpu.getUsed() - time;
 		time = Game.cpu.getUsed();
