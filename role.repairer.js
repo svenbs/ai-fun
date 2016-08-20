@@ -112,6 +112,9 @@ Creep.prototype.performRepair = function() {
         return false;
     }
     var target = Game.getObjectById(best);
+    if (!target) {
+        creep.calculateRepairTarget();
+    }
     var maxHealth = target.hitsMax;
     if (creep.memory.order.maxHealth) {
         maxHealth = creep.memory.order.maxHealth;
