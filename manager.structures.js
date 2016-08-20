@@ -167,12 +167,14 @@ var structureManager = {
 		for (var i = 0; i < area; i++) {
 			for (var j = 0; j < area; j++) {
 				var contents = room.lookAt(pos.x - i, pos.y - j);
+				var buildRoad = true;
 				for (let c in contents) {
 					let content = contents[c];
-					if (content.type == LOOK_TERRAIN && content.type != LOOK_CONSTRUCTION_SITES && content.type != LOOK_STRUCTURES) {
-						room.createConstructionSite(pos.x - i, pos.y - j, STRUCTURE_ROAD);
+					if (content.type == LOOK_CONSTRUCTION_SITES || content.type == LOOK_STRUCTURES || content.structureType == STRUCTURE_SPAWN) {
+						buildRoad = false;
 					}
 				}
+				if (buildRoad) room.createConstructionSite(pos.x - i, pos.y - j, STRUCTURE_ROAD);
 			}
 		}
 	},

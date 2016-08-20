@@ -25,8 +25,8 @@ Creep.prototype.performBuild = function() {
 					type: 'constructionsite',
 					object: constructionSite,
 				};
-				if (constructionsite) {
-					switch (constructionsite.structureType) {
+				if (constructionSite) {
+					switch (constructionSite.structureType) {
 						case STRUCTURE_EXTENSION:
 							option.priority = 5;
 						break;
@@ -43,28 +43,6 @@ Creep.prototype.performBuild = function() {
 							option.priority = 2;
 					}
 				}
-				/*
-				if (constructionSite && constructionSite.structureType == STRUCTURE_EXTENSION) {
-					option = {
-							priority: 5,
-					}
-				}
-				else if (constructionSite && constructionSite.structureType == STRUCTURE_TOWER) {
-					option = {
-							priority: 4,
-					}
-				}
-				else if (constructionSite && constructionSite.structureType == STRUCTURE_CONTAINER) {
-					option = {
-							priority: 3,
-					}
-				}
-				else if (constructionsite && constructionsite.)
-				else {
-					option = {
-							priority: 2,
-					}
-				}*/
 				options.push(option);
 			}
 		}

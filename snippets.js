@@ -5,3 +5,6 @@
 
 // Remove all constructions sites in a roon you have vision in:
 _.forEach(Game.rooms.E49S48.find(FIND_CONSTRUCTION_SITES), (s) => s.remove());
+
+// Let creep drop its energy
+Game.creeps["builder.42"].drop(RESOURCE_ENERGY)
