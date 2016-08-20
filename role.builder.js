@@ -26,9 +26,17 @@ Creep.prototype.performBuild = function() {
 							object: constructionSite,
 					}
 				}
-				else if (constructionSite && constructionSite.structureType == STRUCTURE_CONTAINER) {
+				else if (constructionSite && constructionSite.structureType == STRUCTURE_TOWER) {
 					option = {
 							priority: 4,
+							weight: 1 - ((constructionSite.progressTotal / constructionSite.progress) - (this.pos.getRangeTo(constructionSite))) / 100,
+							type: 'constructionsite',
+							object: constructionSite,
+					}
+				}
+				else if (constructionSite && constructionSite.structureType == STRUCTURE_CONTAINER) {
+					option = {
+							priority: 3,
 							weight: 1 - ((constructionSite.progressTotal / constructionSite.progress) - (this.pos.getRangeTo(constructionSite))) / 100,
 							type: 'constructionsite',
 							object: constructionSite,
