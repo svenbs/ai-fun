@@ -21,11 +21,13 @@ var gameState = {
 	},
 
 	getStoredEnergyAll: function (room) {
+		var avail_resources = 0;
 		if (room.storage) {
-			return room.storage.store[RESOURCE_ENERGY];
+			//return room.storage.store[RESOURCE_ENERGY];
+			// Add Storage-Resources
+			avail_resources += room.storage.store[RESOURCE_ENERGY];
 		}
 
-		var avail_resources = 0;
 
 		// Find dropped energy and add to avail_resources
 		var resources = room.find(FIND_DROPPED_ENERGY, {

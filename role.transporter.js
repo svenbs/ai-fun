@@ -1,5 +1,7 @@
 var utilities = require('utilities');
 var creepGeneral = require('creep.general');
+var gameState = require('game.state');
+
 
 /**
  * Creates a priority list of energy sources available to this creep.
@@ -125,6 +127,18 @@ Creep.prototype.performGetEnergy = function () {
 		creep.calculateEnergySource();
 	}
 
+	// Make sure extensions and spawn are always filled with enough energy
+	// If creep is no transporter and room energy is lower than spawn capacity, worker creeps shall skip gathering
+	var energyAvail = gameState.getStoredEnergyAll(creep.room);
+	if ((energyAvail < creep.room.energyCapacityAvailable || (energyAvail < creep.room.energyCapacityAvailable && creep.room.energyAvailable < creep.room.energyCapacityAvailable * 0.9)) && creep.memory.role != 'transporter') {
+		var containers = creep.room.find(FIND_STRUCTURES, {
+			filter: { structureType: STRUCTURE_CONTAINER }
+		});
+		if (containers && containers.length > 0) {
+			return false;
+		}
+	}
+
 	var best = creep.memory.sourceTarget;
 	if (!best) {
 		if (creep.memory.role == 'transporter' && creep.carry[RESOURCE_ENERGY] > 0) {
@@ -192,8 +206,8 @@ Creep.prototype.getAvailableDeliveryTargets = function () {
 				resourceType: RESOURCE_ENERGY,
 			};
 
-			option.priority -= creepGeneral.getCreepsWithOrder('deliver', target.id).length * 2;
-			option.weight += 1 - (creep.pos.getRangeTo(target) / 100);
+			//option.priority -= creepGeneral.getCreepsWithOrder('deliver', target.id).length * 2;
+			option.weight += 1 - (creep.pos.getRangeTo(target) / 100) - (creepGeneral.getCreepsWithOrder('deliver', target.id).length * 2);
 
 			options.push(option);
 		}

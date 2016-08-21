@@ -250,8 +250,9 @@ Room.prototype.manageSpawns = function() {
 		}
 
 		var tried_spawning = false;
+		var energyAvail = gameState.getStoredEnergyAll(room);
 
-		if (numHarvesters < 1 || (room.energyAvailable < 300 && room.energyCapacityAvailable > 500 && numHarvesters < 1)) {
+		if (numHarvesters < 1 /*|| (room.energyAvailable < 300 && room.energyCapacityAvailable > 500 && numHarvesters < 1)*/) {
 			if (spawn.spawnHarvester(true, maxHarvesterSize, spawnHarvesterTarget)) {
 				return true;
 			}
@@ -280,6 +281,14 @@ Room.prototype.manageSpawns = function() {
 				return true;
 			}
 			tried_spawning = true;
+		}
+		else if (energyAvail < room.energyCapacityAvailable * 1.5) {
+			var containers = room.find(FIND_STRUCTURES, {
+				filter: { structureType: STRUCTURE_CONTAINER }
+			});
+			if (containers && containers.length > 0) {
+				return false;
+			}
 		}
 		else if (builders.length < maxBuilders) {
 			if (spawn.spawnBuilder()) {
@@ -332,8 +341,10 @@ Room.prototype.manageSpawns = function() {
 			}
 		}
 		// Make sure remote creeps are only spawned if this room has enough.
-		console.log('Spawning did not work for a reason - low energy?'); // Debug
-		if (tried_spawning) return false;
+		if (tried_spawning) {
+			return false;
+			console.log('Spawning did not work for a reason - low energy?'); // Debug
+		}
 
 		// If possible claim rooms
 		var numRooms = _.size(_.filter(Game.rooms, (room) => room.controller && room.controller.my));
