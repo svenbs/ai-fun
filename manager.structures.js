@@ -31,12 +31,9 @@ var structureManager = {
 		}
 
 
-		var storage = room.find(FIND_MY_STRUCTURES, {
-			filter: { structureType: STRUCTURE_STORAGE }
-		});
 
 		// Build Roads to every major structure in this room.
-		structureManager.buildRoads(room, storage[0]);
+		structureManager.buildRoads(room);
 
 
 		// Build HarvesterContainers
@@ -57,6 +54,9 @@ var structureManager = {
 
 
 		// Build a Storage if controller is above level 3.
+		var storage = room.find(FIND_MY_STRUCTURES, {
+			filter: { structureType: STRUCTURE_STORAGE }
+		});
 		var storagePosition = room.getStorageLocation();
 		if (room.controller.level > 3 && room.memory.storage && storage.length <= 0) {
 			var contents = room.lookAt(storagePosition.x, storagePosition.y);
@@ -87,11 +87,12 @@ var structureManager = {
 	/**
 	 * Builds a road to every major structure in the room.
 	 */
-	buildRoads: function(room, storage) {
+	buildRoads: function(room) {
 		if (!room.controller && !room.controller.my) {
 			return;
 		}
 
+		var storage = room.storage;
 		var sources = room.memory.sources;
 		var controller = room.controller;
 		var spawns = room.find(FIND_MY_STRUCTURES, {
@@ -115,8 +116,7 @@ var structureManager = {
 				structureManager.checkRoad(room, storage, controller);
 				structureManager.checkRoad(room, spawn, storage);
 				// Build roads around storage for better accessibility.
-				var storagePosition = room.getStorageLocation();
-				structureManager.checkRoadAtArea(room, room.storage.pos, 3);
+				structureManager.checkRoadAtArea(room, storage.pos, 3);
 			}
 			else {
 				structureManager.checkRoad(room, spawn, controller);

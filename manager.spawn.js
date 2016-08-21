@@ -220,7 +220,7 @@ Room.prototype.manageSpawns = function() {
 				maxUpgraders = 2;
 			}
 		}
-		if (maxUpgraders == 0 && room.controller.ticksToDowngrade < CONTROLLER_DOWNGRADE[room.controller.level] * 0.5) {
+		if (maxUpgraders == 0 && room.controller.ticksToDowngrade < CONTROLLER_DOWNGRADE[room.controller.level] * 0.5 && upgraders.length <= 0 ) {
 			console.log('trying to spawn upgrader because controller is close to downgrading', room.controller.ticksToDowngrade, '/', CONTROLLER_DOWNGRADE[room.controller.level]);
 			// Even if no upgraders are needed, at least create one when the controller is getting close to being downgraded.
 			maxUpgraders = 1;
@@ -331,6 +331,7 @@ Room.prototype.manageSpawns = function() {
 				}
 			}
 		}
+		// Make sure remote creeps are only spawned if this room has enough.
 		console.log('Spawning did not work for a reason - low energy?'); // Debug
 		if (tried_spawning) return false;
 
