@@ -2,7 +2,6 @@
 // Screeps profiler stuff
 var profiler = require('screeps-profiler');
 
-require('pathfinding');
 require('role.harvester');
 require('role.harvester.remote');
 require('role.transporter');
@@ -12,6 +11,9 @@ require('role.repairer');
 require('role.brawler');
 require('role.claimer');
 require('role.builder.remote');
+
+require('manager.sources');
+require('pathfinding');
 
 var utilities = require('utilities');
 var spawnManager = require('manager.spawn');

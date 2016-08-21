@@ -12,49 +12,109 @@ var utilities = require('utilities');
  */
 
 /**
- * Build roads on the way home (TODO)
+ * Makes the creep build a road under itself on its way home.
  */
 Creep.prototype.performBuildRoad = function() {
 	var creep = this;
-	var workParts = creep.memory.body.work;
-	var targetPosition = utilities.decodePosition(creep.memory.storage);
-	var harvestMemory = Memory.rooms[targetPosition.roomName].remoteHarvesting[creep.memory.source];
-
+	// @todo Cache this in creep memory.
+	var workParts = 0;
+	for (let j in creep.body) {
+		if (creep.body[j].type == WORK && creep.body[j].hits > 0) {
+			workParts++;
+		}
+	}
 
 	if (workParts < 1) {
 		return false;
 	}
 
+	// Check if creep is travelling on a road.
+	var hasRoad = false;
 	var actionTaken = false;
-
-
-	if (creep.pos.roomName != targetPosition.roomName) {
-		// @todo: Check if on cachedPath and if on road if not create construction site
-		var structures = creep.pos.lookFor(LOOK_STRUCTURES);
-		var constructionSites = creep.pos.lookFor(LOOK_CONSTRUCTION_SITES);
-		for (let i in structures) {
-			var structure = structures[i];
-			if (!actionTaken && structure.structureType == STRUCTURE_ROAD && structure.hits < structure.hitsMax - workParts * 100) {
-				creep.repair(structure);
-				actionTaken = true;
-				// If structure is especially damaged, stay here to repair
-				if (structure.hits < structure.hitsMax - workParts * 2 * 100) {
-					return true;
-				}
+	var structures = creep.pos.lookFor(LOOK_STRUCTURES);
+	if (structures && structures.length > 0) {
+		for (var i in structures) {
+			if (structures[i].structureType == STRUCTURE_ROAD) {
+				hasRoad = true;
+				break;
 			}
 		}
-		if (structures.length <= 0 && constructionSites.length <= 0) {
-			creep.room.createConstructionSite(creep.pos, STRUCTURE_ROAD);
-			actionTaken = true;
-		}
-		if (!actionTaken && constructionSites && constructionSites.length > 0) {
-			creep.build(constructionSites[0]);
-			Memory.rooms[targetPosition.roomName].remoteHarvesting[creep.memory.source].buildCost += workParts;
-			actionTaken = true;
-			// Stay for building
-			//return true;
+	}
+
+	// Also repair structures in passing.
+	var needsRepair = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+		filter: (structure) => (structure.structureType == STRUCTURE_ROAD || structure.structureType == STRUCTURE_CONTAINER) && structure.hits < structure.hitsMax - workParts * 100
+	});
+	if (needsRepair && creep.pos.getRangeTo(needsRepair) <= 3) {
+		Memory.rooms[utilities.decodePosition(creep.memory.storage).roomName].remoteHarvesting[creep.memory.source].buildCost += workParts;
+		creep.repair(needsRepair);
+		actionTaken = true;
+		// If structure is especially damaged, stay here to keep repairing.
+		if (needsRepair.hits < needsRepair.hitsMax - workParts * 2 * 100) {
+			return true;
 		}
 	}
+
+	if (!hasRoad) {
+		// Make sure there is a construction site for a road on this tile.
+		var constructionSites = creep.pos.lookFor(LOOK_CONSTRUCTION_SITES);
+		_.filter(constructionSites, (site) => site.structureType == STRUCTURE_ROAD);
+		if (constructionSites.length <= 0) {
+			if (creep.pos.createConstructionSite(STRUCTURE_ROAD) != OK) {
+				hasRoad = true;
+			}
+		}
+	}
+
+	var needsBuilding = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES, {
+		filter: (site) => site.structureType == STRUCTURE_ROAD || site.structureType == STRUCTURE_CONTAINER
+	});
+	if (needsBuilding && creep.pos.getRangeTo(needsBuilding) <= 3) {
+		if (actionTaken) {
+			// Try again next time.
+			return true;
+		}
+		creep.build(needsBuilding);
+
+		var buildCost = Math.min(creep.carry.energy, workParts * 5, needsBuilding.progressTotal - needsBuilding.progress);
+		Memory.rooms[utilities.decodePosition(creep.memory.storage).roomName].remoteHarvesting[creep.memory.source].buildCost += buildCost;
+		actionTaken = true;
+
+		// Stay here if more building is needed.
+		if (needsBuilding.progressTotal - needsBuilding.progress > workParts * 10) {
+			return true;
+		}
+	}
+
+	if (!hasRoad) {
+		return true;
+	}
+	return false;
+
+	var needsBuilding = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES, {
+		filter: (site) => site.structureType == STRUCTURE_ROAD || site.structureType == STRUCTURE_CONTAINER
+	});
+	if (needsBuilding && creep.pos.getRangeTo(needsBuilding) <= 3) {
+		if (actionTaken) {
+			// Try again next time.
+			return true;
+		}
+		creep.build(needsBuilding);
+
+		var buildCost = Math.min(creep.carry.energy, workParts * 5, needsBuilding.progressTotal - needsBuilding.progress);
+		Memory.rooms[utilities.decodePosition(creep.memory.storage).roomName].remoteHarvesting[creep.memory.source].buildCost += buildCost;
+		actionTaken = true;
+
+		// Stay here if more building is needed.
+		if (needsBuilding.progressTotal - needsBuilding.progress > workParts * 10) {
+			return true;
+		}
+	}
+
+	if (!hasRoad) {
+		return true;
+	}
+	return false;
 };
 
 /**
@@ -150,10 +210,10 @@ Creep.prototype.performRemoteHarvesterDelivery = function() {
 	if (!target || _.sum(target.store) + creep.carry.energy >= target.storeCapacity) {
 		// Container is full, drop energy
 		var containers = creep.pos.findInRange(STRUCTURE_CONTAINER,3, {
-		    filter: (container) => _.sum(container.store) < container.storeCapacity + _.sum(creep.carry.energy)
+			filter: (container) => _.sum(container.store) < container.storeCapacity + _.sum(creep.carry.energy)
 		});
 		if (containers && containers.length > 0) {
-		     target = container[0];
+			 target = container[0];
 		}
 		else if (creep.drop(RESOURCE_ENERGY) == OK) {
 			Memory.rooms[targetPosition.roomName].remoteHarvesting[creep.memory.source].revenue = harvestMemory.revenue;
@@ -183,9 +243,25 @@ Creep.prototype.setRemoteHarvesterState = function(harvesting) {
 	var targetPosition = utilities.decodePosition(this.memory.storage);
 	var harvestMemory = Memory.rooms[targetPosition.roomName].remoteHarvesting[this.memory.source];
 
+	// Check if there is a container near the source, and save it.
+	var container = this.pos.findClosestByRange(FIND_STRUCTURES, {
+		filter: (structure) => structure.structureType == STRUCTURE_CONTAINER
+	});
+	if (container && this.pos.getRangeTo(container) <= 3) {
+		//console.log('container found and recorded');
+		harvestMemory.hasContainer = true;
+		harvestMemory.containerId = container.id;
+	}
+	else {
+		harvestMemory.hasContainer = false;
+		delete harvestMemory.containerId;
+	}
+
 	if (harvestMemory.cachedPath) {
 		this.setCachedPath(harvestMemory.cachedPath.path, !harvesting, 1);
 	}
+
+	Memory.rooms[targetPosition.roomName].remoteHarvesting[this.memory.source] = harvestMemory;
 }
 
 /**
@@ -193,10 +269,10 @@ Creep.prototype.setRemoteHarvesterState = function(harvesting) {
  */
 Creep.prototype.runRemoteHarvesterLogic = function() {
 	if (!this.memory.harvesting && _.sum(this.carry) <= 0) {
-		this.setHarvesterState(true);
+		this.setRemoteHarvesterState(true);
 	}
 	else if (this.memory.harvesting && _.sum(this.carry) >= this.carryCapacity) {
-		this.setHarvesterState(false);
+		this.setRemoteHarvesterState(false);
 	}
 
 	if (this.memory.harvesting) {
