@@ -142,7 +142,7 @@ var structureManager = {
 			var buildRoad = false;
 			for (let i in contents) {
 				var content = contents[i];
-				if (content.type == LOOK_STRUCTURES && content.structure.structureType != STRUCTURE_ROAD || content.type != LOOK_CONSTRUCTION_SITES) {
+				if (content.type != LOOK_STRUCTURES && content.type != LOOK_CONSTRUCTION_SITES) {
 					buildRoad = true;
 					break;
 				}
@@ -171,7 +171,7 @@ var structureManager = {
 				var buildRoad = true;
 				for (let c in contents) {
 					let content = contents[c];
-					if (content.type == LOOK_CONSTRUCTION_SITES || content.type == LOOK_STRUCTURES || content.structureType == STRUCTURE_SPAWN) {
+					if (content.type == LOOK_CONSTRUCTION_SITES || content.type == LOOK_STRUCTURES || content.structureType == STRUCTURE_SPAWN || content.structureType == STRUCTURE_STORAGE) {
 						buildRoad = false;
 					}
 				}

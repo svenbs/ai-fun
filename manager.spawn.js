@@ -357,6 +357,7 @@ Room.prototype.manageSpawns = function() {
 
 				if (Game.rooms[flag.pos.roomName] && Game.rooms[flag.pos.roomName].controller.my) {
 					// Room is already claimed
+					console.log('Room is already claimed'); // Debug
 					continue;
 				}
 
@@ -378,6 +379,7 @@ Room.prototype.manageSpawns = function() {
 					});
 
 					if (!claimers || claimers.length < 1) {
+						var result = spawn.spawnClaimer(flag.pos, 'claim');
 						if (spawn.spawnClaimer(flag.pos, 'claim')) {
 							console.log('sending new claimer to ' + flag.pos.roomName);
 							return true;
