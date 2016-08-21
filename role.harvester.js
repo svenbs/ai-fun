@@ -44,10 +44,10 @@ Creep.prototype.performHarvest = function() {
 	// Move to source
 	if (creep.pos.getRangeTo(source) > 1) {
 		// @todo: Pathfinding und wiederverwenden des Pfads
-		creep.moveTo(source);
+		var result = creep.moveTo(source);
 	}
 	else {
-		creep.harvest(source);
+		var result = creep.harvest(source);
 	}
 
 	// Wenn Container oder Link in der Nähe (Range 1), direkt zustellen

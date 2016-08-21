@@ -763,8 +763,8 @@ StructureSpawn.prototype.spawnBrawler = function (targetPosition, maxAttackParts
  * Spawns a new claimer.
  */
 StructureSpawn.prototype.spawnClaimer = function (targetPosition, mission) {
-	var minSize = BODYPART_COST[CLAIM] * 2 + BODYPART_COST[MOVE] * 3;
-	if (this.room.energyAvailable < minSize) return false;
+	//var minSize = BODYPART_COST[CLAIM] * 2 + BODYPART_COST[MOVE] * 3;
+	//if (this.room.energyAvailable < minSize) return false;
 
 	return this.createManagedCreep({
 		role: 'claimer',

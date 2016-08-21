@@ -38,7 +38,7 @@ Creep.prototype.performRemoteBuild = function() {
 		//creep.memory.tempRole = 'builder';
 
 		if (!creep.performGetEnergy()) {
-			creep.performHarvest();
+			var result = creep.performHarvest();
 			//creep.memory.tempRole = 'harvester';
 		}
 	}
