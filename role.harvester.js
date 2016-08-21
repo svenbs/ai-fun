@@ -20,7 +20,7 @@ Creep.prototype.performHarvest = function() {
 			// Room has no resources.
 			// @todo: creep.room.sources define this object
 			if (!creep.room.sources || creep.room.sources.length <= 0) {
-			  return false;
+				return false;
 			}
 
 			// Find closest source
@@ -47,7 +47,7 @@ Creep.prototype.performHarvest = function() {
 		creep.moveTo(source);
 	}
 	else {
-		var result = creep.harvest(source);
+		creep.harvest(source);
 	}
 
 	// Wenn Container oder Link in der Nähe (Range 1), direkt zustellen
@@ -62,6 +62,7 @@ Creep.prototype.performHarvest = function() {
 	if (targets.length > 0) {
 		creep.transfer(targets[0], RESOURCE_ENERGY);
 	}
+	return true;
 }
 
 /**

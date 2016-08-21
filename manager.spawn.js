@@ -357,7 +357,6 @@ Room.prototype.manageSpawns = function() {
 
 				if (Game.rooms[flag.pos.roomName] && Game.rooms[flag.pos.roomName].controller.my) {
 					// Room is already claimed
-					console.log('Room is already claimed'); // Debug
 					continue;
 				}
 
