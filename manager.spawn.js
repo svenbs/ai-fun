@@ -249,40 +249,49 @@ Room.prototype.manageSpawns = function() {
 			}
 		}
 
+		var tried_spawning = false;
+
 		if (numHarvesters < 1 || (room.energyAvailable < 300 && room.energyCapacityAvailable > 500 && numHarvesters < 1)) {
 			if (spawn.spawnHarvester(true, maxHarvesterSize, spawnHarvesterTarget)) {
 				return true;
 			}
+			tried_spawning = true;
 		}
 		else if (numTransporters < 1 && containers.length > 0) {
 			if (spawn.spawnTransporter(true)) {
 				return true;
 			}
+			tried_spawning = true;
 		}
 		else if (spawnHarvester && numHarvesters < maxHarvesters) {
 			if (spawn.spawnHarvester(false, maxHarvesterSize, spawnHarvesterTarget)) {
 				return true;
 			}
+			tried_spawning = true;
 		}
 		else if ((numTransporters < (maxTransporters / 2)) && containers.length > 0) {
 			if (spawn.spawnTransporter()) {
 				return true;
 			}
+			tried_spawning = true;
 		}
 		else if (upgraders.length < maxUpgraders || (room.energyAvailable < 300 && room.energyCapacityAvailable > 300 && maxUpgraders < 0)) {
 			if (spawn.spawnUpgrader()) {
 				return true;
 			}
+			tried_spawning = true;
 		}
 		else if (builders.length < maxBuilders) {
 			if (spawn.spawnBuilder()) {
 				return true;
 			}
+			tried_spawning = true;
 		}
 		else if ((numTransporters < maxTransporters) && containers.length > 0) {
 			if (spawn.spawnTransporter()) {
 				return true;
 			}
+			tried_spawning = true;
 		}
 		// Spawn repairers only in Rooms above level 2
 		else if (repairers.length < 2) {
@@ -300,6 +309,7 @@ Room.prototype.manageSpawns = function() {
 					if (spawn.spawnRepairer()) return true;
 				}
 			}
+			tried_spawning = true;
 		}
 		else {
 			// Spawn squads.
@@ -321,6 +331,8 @@ Room.prototype.manageSpawns = function() {
 				}
 			}
 		}
+		console.log('Spawning did not work for a reason - low energy?'); // Debug
+		if (tried_spawning) return false;
 
 		// If possible claim rooms
 		var numRooms = _.size(_.filter(Game.rooms, (room) => room.controller && room.controller.my));

@@ -115,7 +115,8 @@ var structureManager = {
 				structureManager.checkRoad(room, storage, controller);
 				structureManager.checkRoad(room, spawn, storage);
 				// Build roads around storage for better accessibility.
-				structureManager.checkRoadAtArea(room, storagePosition, 3);
+				var storagePosition = room.getStorageLocation();
+				structureManager.checkRoadAtArea(room, room.storage.pos, 3);
 			}
 			else {
 				structureManager.checkRoad(room, spawn, controller);
