@@ -42,7 +42,7 @@ Creep.prototype.performBuildRoad = function() {
 	}
 
 	// Also repair structures in passing.
-	var needsRepair = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+	/*var needsRepair = creep.pos.findClosestByRange(FIND_STRUCTURES, {
 		filter: (structure) => (structure.structureType == STRUCTURE_ROAD || structure.structureType == STRUCTURE_CONTAINER) && structure.hits < structure.hitsMax - workParts * 100
 	});
 	if (needsRepair && creep.pos.getRangeTo(needsRepair) <= 3) {
@@ -53,7 +53,7 @@ Creep.prototype.performBuildRoad = function() {
 		if (needsRepair.hits < needsRepair.hitsMax - workParts * 2 * 100) {
 			return true;
 		}
-	}
+	}*/
 
 	if (!hasRoad) {
 		// Make sure there is a construction site for a road on this tile.

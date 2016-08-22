@@ -394,6 +394,11 @@ var utilities = {
 					}
 				});
 
+				// Avoid creeps in the room
+				room.find(FIND_CREEPS).forEach(function(creep) {
+					costs.set(creep.pos.x, creep.pos.y, 0xff);
+				});
+
 				// Also try not to drive through bays.
 				room.find(FIND_FLAGS, {
 					filter: (flag) => flag.name.startsWith('Bay:')
@@ -527,6 +532,10 @@ var utilities = {
 		if (newParts.move) {
 			// One move part will be added last.
 			newParts.move--;
+			for (var i = 0; i < newParts.move; i++) {
+				body.push(MOVE);
+			}
+			newParts.move = 1;
 		}
 		var done = false;
 		while (!done) {

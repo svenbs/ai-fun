@@ -86,6 +86,7 @@ Creep.prototype.runLogic = function() {
 		var target = creep.memory.singleRoom + "@25x25";
 		var targetPosition = utilities.decodePosition(target);
 		creep.moveTo(targetPosition);
+		return;
 	}
 
 	if (creep.memory.tempRole) {

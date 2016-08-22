@@ -11,8 +11,8 @@ var structureManager = {
 	 */
 	buildRoom: function(room) {
 		// Don't try building in unowned rooms
-		if (!room.controller && !room.controller.my) {
-			return;
+		if (room.controller && !room.controller.my) {
+			return false;
 		}
 
 		// Only build rooms if enough CPU is available.

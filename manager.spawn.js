@@ -92,7 +92,7 @@ StructureSpawn.prototype.createManagedCreep = function(options) {
 	if (!Memory.creepCounter[memory.role]) {
 		Memory.creepCounter[memory.role] = 0;
 	}
-	var newName = memory.role + '.' + Memory.creepCounter[memory.role];
+	var newName = memory.role + Memory.creepCounter[memory.role];
 
 	// Actually try to spawn this creep.
 	var result = this.createCreep(options.body, newName, memory);

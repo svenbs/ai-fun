@@ -33,6 +33,7 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 	var creep = this;
 	var options = [];
 
+
 	if (creep.memory.target) {
 		var targetPosition = utilities.decodePosition(creep.memory.target);
 		if (creep.pos.roomName == targetPosition.roomName) {
@@ -100,14 +101,16 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 				// @todo: Find walls or ramparts in front of controller
 				// @todo: Find Controller
 			}
-			if (creep.memory.body.heal > 0) {
-				var damaged = _.filter(gameState.getFriendlyCreeps(creep.pos.roomName), (friendly) => {
-					friendly.id != creep.id && 	friendly.hits < friendly.hitsMax
+			if (creep.memory.body.heal > 0 && creep.memory.body.attack <= 0 && creep.memory.body.ranged_attack <= 0) {
+				var damaged = _.filter(gameState.getFriendlyCreeps(creep.pos.roomName), function (friendly) {
+					if (friendly.id != creep.id && friendly.hits < friendly.hitsMax && friendly.memory.role == 'brawler') {
+						return friendly;
+					}
 				});
 
 				if (damaged && damaged.length > 0) {
 					for (let i in damaged) {
-						friendly = damaged[i];
+						var friendly = damaged[i];
 
 						var option = {
 							priority: 3,
@@ -119,20 +122,22 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 						options.push(option);
 					}
 				}
-				var friendlies = _.filter(gameState.getFriendlyCreeps(creep.pos.roomName), (friendly) => {
-					friendly.id != creep.id && creep.memory.body.attack.length >= 0 && creep.memory.body.ranged >= 0
+				var friendlies = _.filter(gameState.getFriendlyCreeps(creep.pos.roomName), function (friendly) {
+					if (friendly.id != creep.id && friendly.memory.role == 'brawler' && (friendly.memory.body.attack >= 0 || friendly.memory.body.ranged_attack >= 0)) {
+						return friendly;
+					}
 				});
 				// If no damaged creep is found, stay close to other creeps
 				if (friendlies && friendlies.length > 0) {
 					for (let i in friendlies) {
-						friendly = friendlies[0];
-
+						var friendly = friendlies[i];
 						var option = {
 							priority: 1,
 							weight: 1 - (creep.pos.getRangeTo(friendly) / 100),
 							type: 'friendlycreep',
 							object: friendly,
 						};
+
 
 						options.push(option);
 					}
@@ -199,7 +204,7 @@ Creep.prototype.executeMilitaryMoveOrders = function(squad) {
 	}
 
 	// Ranged units shall try to keep some distance
-	if (creep.memory.body.ranged_attack > 0) {
+	if (creep.memory.body.ranged_attack > 0 && creep.memory.squadUnitType != 'frawler') {
 		var target = Game.getObjectById(creep.memory.order.target);
 		//var enemies = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 2);
 		//if (enemies && enemies.length > 0) {
