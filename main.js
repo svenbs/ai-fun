@@ -194,7 +194,13 @@ var main = {
 		for (let roomName in Game.rooms) {
 			var room = Game.rooms[roomName];
 
-			structureManager.buildRoom(room);
+			try {
+				structureManager.buildRoom(room);
+			}
+			catch (e) {
+				console.log('BuildRoom failed: ', (e));
+				console.log(e.stack);
+			}
 		}
 	},
 

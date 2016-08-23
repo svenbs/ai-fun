@@ -88,7 +88,7 @@ var structureManager = {
 	 * Builds a road to every major structure in the room.
 	 */
 	buildRoads: function(room) {
-		if (!room.controller && !room.controller.my) {
+		if (room.controller && !room.controller.my) {
 			return;
 		}
 
