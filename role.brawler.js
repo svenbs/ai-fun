@@ -123,10 +123,11 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 					}
 				}
 				var friendlies = _.filter(gameState.getFriendlyCreeps(creep.pos.roomName), function (friendly) {
-					if (friendly.id != creep.id && friendly.memory.role == 'brawler' && (friendly.memory.body.attack >= 0 || friendly.memory.body.ranged_attack >= 0)) {
+					if (friendly.id != creep.id && creep.memory.role == 'brawler' && (friendly.memory.body.attack > 0 || creep.memory.body.ranged_attack > 0)) {
 						return friendly;
 					}
 				});
+				console.log(friendlies); // Debug
 				// If no damaged creep is found, stay close to other creeps
 				if (friendlies && friendlies.length > 0) {
 					for (let i in friendlies) {
