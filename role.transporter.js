@@ -186,7 +186,26 @@ Creep.prototype.getAvailableDeliveryTargets = function () {
 	let storage = creep.room.storage;
 
 	if (creep.carry.energy >= creep.carryCapacity * 0.1) {
-		// Primarily fill Spawns and extensions
+		// Primarily fill Towers
+		var targets = creep.room.find(FIND_MY_STRUCTURES, {
+			filter: (structure) => {
+				return structure.structureType == STRUCTURE_TOWER && structure.energy < structure.energyCapacity
+			}
+		});
+		for (let i in targets) {
+			let target = targets[i];
+			let option = {
+				priority: 6,
+				weigt: 1,
+				type: 'structure',
+				object: target,
+				resourceType: RESOURCE_ENERGY,
+			};
+
+			options.push(option);
+		}
+
+		// After that fill Spawns and extensions
 		var targets = creep.room.find(FIND_MY_STRUCTURES, {
 			filter: (structure) => {
 				return (structure.structureType == STRUCTURE_EXTENSION ||

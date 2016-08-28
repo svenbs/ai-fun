@@ -127,7 +127,6 @@ Creep.prototype.getAvailableHostileCreeps = function() {
 						return friendly;
 					}
 				});
-				console.log(friendlies); // Debug
 				// If no damaged creep is found, stay close to other creeps
 				if (friendlies && friendlies.length > 0) {
 					for (let i in friendlies) {

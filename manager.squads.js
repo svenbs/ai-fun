@@ -76,7 +76,7 @@ Squad.prototype.spawnUnit = function (spawn) {
 		return spawn.createManagedCreep({
 			role: 'brawler',
 			//bodyWeights: {move: 0.5, tough: 0.1, ranged_attack: 0.2, heal: 0.2},
-			bodyWeights: {move: 0.5, tough: 0.1, ranged_attack: 0.4},
+			bodyWeights: {move: 0.52, tough: 0.1, ranged_attack: 0.38},
 			memory: {
 				squadName: this.name,
 				squadUnitType: toSpawn,
